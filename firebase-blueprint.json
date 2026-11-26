@@ -1,0 +1,147 @@
+{
+  "entities": {
+    "PrivateUser": {
+      "title": "PrivateUser",
+      "description": "Private authenticated user record storing PII and granular read receipt privacy settings isolated to the owner.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "readReceiptsEnabled": { "type": "boolean" },
+        "groupReadReceiptsEnabled": { "type": "boolean" },
+        "chatReadReceiptOverrides": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Client submits FieldValue.serverTimestamp()" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Client submits FieldValue.serverTimestamp()" }
+      },
+      "required": ["userId", "displayName", "createdAt", "updatedAt"]
+    },
+    "PublicProfile": {
+      "title": "PublicProfile",
+      "description": "Discoverable non-PII chat identity and ECDH P-256 public key for E2EE key exchange.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "statusText": { "type": "string" },
+        "publicKey": { "type": "string" },
+        "online": { "type": "boolean" },
+        "discoverable": { "type": "boolean" },
+        "lastSeen": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "displayName", "statusText", "publicKey", "online", "discoverable", "lastSeen", "createdAt", "updatedAt"]
+    },
+    "ChatRoom": {
+      "title": "ChatRoom",
+      "description": "Direct or Group E2EE chat room with wrapped AES-256-GCM room keys per member.",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["DIRECT", "GROUP"] },
+        "title": { "type": "string" },
+        "memberUids": { "type": "array" },
+        "adminUids": { "type": "array" },
+        "memberNames": { "type": "object" },
+        "encryptedKeys": { "type": "object" },
+        "lastMessagePreview": { "type": "string" },
+        "lastSenderId": { "type": "string" },
+        "lastMessageId": { "type": "string" },
+        "lastMessageReadByUids": { "type": "array" },
+        "createdBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["type", "title", "memberUids", "adminUids", "memberNames", "encryptedKeys", "lastMessagePreview", "createdBy", "createdAt", "updatedAt"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "E2EE encrypted message (text, image, video, current/live location, call log, or deleted tombstone) with read receipts.",
+      "type": "object",
+      "properties": {
+        "chatId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "memberUids": { "type": "array" },
+        "messageType": { "type": "string", "enum": ["TEXT", "IMAGE", "VIDEO", "LOCATION", "LIVE_LOCATION", "CALL_LOG", "DELETED"] },
+        "encryptedContent": { "type": "string" },
+        "iv": { "type": "string" },
+        "encryptionVersion": { "type": "string" },
+        "encryptedThumb": { "type": "string" },
+        "thumbIv": { "type": "string" },
+        "readByUids": { "type": "array" },
+        "readBy": { "type": "object" },
+        "edited": { "type": "boolean" },
+        "deleted": { "type": "boolean" },
+        "editedAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["chatId", "senderId", "senderName", "memberUids", "messageType", "encryptedContent", "iv", "encryptionVersion", "edited", "deleted", "createdAt", "updatedAt"]
+    },
+    "LiveLocationShare": {
+      "title": "LiveLocationShare",
+      "description": "Realtime encrypted location sharing stream per sharer inside a chat.",
+      "type": "object",
+      "properties": {
+        "chatId": { "type": "string" },
+        "sharerId": { "type": "string" },
+        "sharerName": { "type": "string" },
+        "memberUids": { "type": "array" },
+        "encryptedCoords": { "type": "string" },
+        "iv": { "type": "string" },
+        "active": { "type": "boolean" },
+        "expiresAtEpochMs": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["chatId", "sharerId", "sharerName", "memberUids", "encryptedCoords", "iv", "active", "expiresAtEpochMs", "createdAt", "updatedAt"]
+    },
+    "CallSession": {
+      "title": "CallSession",
+      "description": "Voice and Video call signaling session with E2EE verification code.",
+      "type": "object",
+      "properties": {
+        "chatId": { "type": "string" },
+        "chatTitle": { "type": "string" },
+        "callerId": { "type": "string" },
+        "callerName": { "type": "string" },
+        "participantUids": { "type": "array" },
+        "callType": { "type": "string", "enum": ["VOICE", "VIDEO"] },
+        "status": { "type": "string", "enum": ["RINGING", "CONNECTED", "ENDED", "DECLINED"] },
+        "e2eeSafetyCode": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["chatId", "chatTitle", "callerId", "callerName", "participantUids", "callType", "status", "e2eeSafetyCode", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/PrivateUser" },
+      "description": "Owner-only private user PII profile and read receipt privacy settings."
+    },
+    "/publicProfiles/{userId}": {
+      "schema": { "$ref": "#/entities/PublicProfile" },
+      "description": "Discoverable non-PII user chat profiles and E2EE public keys."
+    },
+    "/chats/{chatId}": {
+      "schema": { "$ref": "#/entities/ChatRoom" },
+      "description": "Direct and group conversations."
+    },
+    "/chats/{chatId}/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/ChatMessage" },
+      "description": "E2EE encrypted messages inside a chat."
+    },
+    "/chats/{chatId}/liveLocations/{sharerId}": {
+      "schema": { "$ref": "#/entities/LiveLocationShare" },
+      "description": "Realtime encrypted location stream per sharer."
+    },
+    "/calls/{callId}": {
+      "schema": { "$ref": "#/entities/CallSession" },
+      "description": "Voice and video call signaling."
+    }
+  }
+}

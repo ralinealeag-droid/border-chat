@@ -1,0 +1,6 @@
+{
+  "name": "BORDER CHAT",
+  "description": "Aplikasi chat terenkripsi end-to-end mirip WhatsApp dengan grup chat, panggilan suara & video, kirim foto/video, edit/hapus pesan, dan berbagi lokasi terkini serta realtime.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

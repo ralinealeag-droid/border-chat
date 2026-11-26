@@ -1,0 +1,1745 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PES CUP & LIGA - Pengocok & Bagan Turnamen</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Teko:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #060b14;
+            background-image:
+                radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.16) 0%, transparent 55%),
+                radial-gradient(circle at 85% 90%, rgba(245, 158, 11, 0.08) 0%, transparent 45%);
+            color: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .font-sport {
+            font-family: 'Teko', sans-serif;
+        }
+        .pitch-card {
+            background: rgba(15, 23, 42, 0.88);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(51, 65, 85, 0.75);
+        }
+        .pitch-stripe {
+            background-image: repeating-linear-gradient(
+                90deg,
+                rgba(16, 185, 129, 0.04) 0px,
+                rgba(16, 185, 129, 0.04) 36px,
+                rgba(5, 150, 105, 0.09) 36px,
+                rgba(5, 150, 105, 0.09) 72px
+            );
+        }
+        /* Custom scrollbar for bracket */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #10b981;
+        }
+        @keyframes spinBall {
+            0% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(1.12); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+        .animate-ball {
+            animation: spinBall 0.9s linear infinite;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER & STEPPER -->
+    <header class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+            <!-- Brand Logo -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-slate-950 shadow-lg shadow-emerald-500/20">
+                    <i class="fa-solid fa-futbol text-xl"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="font-sport text-2xl sm:text-3xl font-bold tracking-wide text-white leading-none">PES CUP &amp; LIGA</h1>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-400/20 text-amber-300 border border-amber-400/30">Draw Engine</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400">Pengocok Pemain, Bagan Knockout &amp; Klasemen Otomatis</p>
+                </div>
+            </div>
+
+            <!-- Step Progress Indicator -->
+            <nav aria-label="Tahapan Turnamen" class="flex items-center gap-1.5 sm:gap-2 bg-slate-900/90 p-1.5 rounded-xl border border-slate-800">
+                <button type="button" id="step-nav-1" data-step="1"
+                    class="step-nav-btn flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 text-slate-950 shadow transition cursor-pointer">
+                    <span class="w-4 h-4 rounded-full bg-slate-950/20 flex items-center justify-center text-[10px]">1</span>
+                    <span>Pengaturan</span>
+                </button>
+                <i class="fa-solid fa-chevron-right text-[10px] text-slate-600"></i>
+                <button type="button" id="step-nav-2" data-step="2"
+                    class="step-nav-btn flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition cursor-pointer">
+                    <span class="w-4 h-4 rounded-full bg-slate-800 flex items-center justify-center text-[10px]">2</span>
+                    <span>Input Pemain</span>
+                </button>
+                <i class="fa-solid fa-chevron-right text-[10px] text-slate-600"></i>
+                <button type="button" id="step-nav-3" data-step="3"
+                    class="step-nav-btn flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition cursor-pointer">
+                    <span class="w-4 h-4 rounded-full bg-slate-800 flex items-center justify-center text-[10px]">3</span>
+                    <span>Hasil Undian</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-6 sm:py-8">
+
+        <!-- TOAST NOTIFICATION -->
+        <div id="toast-box" class="fixed bottom-5 right-5 z-50 hidden max-w-sm">
+            <div id="toast-content" class="flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl border text-sm font-medium bg-slate-900 border-emerald-500/50 text-white">
+                <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
+                <span id="toast-message">Pesan notifikasi</span>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- TAHAP 1: PENGATURAN TURNAMEN                              -->
+        <!-- ========================================================= -->
+        <section id="section-step-1" class="max-w-2xl mx-auto">
+            <div class="pitch-card rounded-2xl p-5 sm:p-8 shadow-2xl">
+                <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-800">
+                    <div class="w-11 h-11 rounded-xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center text-emerald-400">
+                        <i class="fa-solid fa-sliders text-lg"></i>
+                    </div>
+                    <div>
+                        <span class="text-[11px] font-bold uppercase tracking-widest text-emerald-400">Tahap 1 dari 3</span>
+                        <h2 class="font-sport text-2xl sm:text-3xl font-bold uppercase tracking-wide text-white leading-none">Pengaturan Kompetisi PES</h2>
+                    </div>
+                </div>
+
+                <!-- 1. Nama Turnamen -->
+                <div class="mb-6">
+                    <label for="input-tournament-name" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">
+                        <i class="fa-solid fa-trophy text-amber-400 mr-1.5"></i> Nama Kompetisi / Turnamen
+                    </label>
+                    <input type="text" id="input-tournament-name" value="PES CHAMPIONSHIP 2026" placeholder="Contoh: PES CUP RENTAL MALAM MINGGU"
+                        class="w-full bg-slate-950/90 border border-slate-700 focus:border-emerald-400 rounded-xl px-4 py-3 text-white font-sport text-xl tracking-wide uppercase focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition">
+                </div>
+
+                <!-- 2. Pilihan Mode Kompetisi (CUP vs LIGA) -->
+                <div class="mb-6">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2.5">
+                        <i class="fa-solid fa-sitemap text-emerald-400 mr-1.5"></i> Pilih Jenis Kompetisi
+                    </label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <button type="button" id="btn-mode-cup"
+                            class="text-left p-4 rounded-xl bg-emerald-500/15 border-2 border-emerald-400 transition flex items-start gap-3 cursor-pointer">
+                            <div class="w-10 h-10 rounded-lg bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-400 shrink-0 mt-0.5">
+                                <i class="fa-solid fa-trophy text-lg"></i>
+                            </div>
+                            <div>
+                                <div class="font-sport text-lg font-bold uppercase text-white tracking-wide leading-tight">MODE CUP (Sistem Gugur)</div>
+                                <p class="text-xs text-slate-300 mt-0.5">Bagan knockout langsung hingga Final. Mendukung 2–64 pemain &amp; slot BYE otomatis.</p>
+                            </div>
+                        </button>
+
+                        <button type="button" id="btn-mode-league"
+                            class="text-left p-4 rounded-xl bg-slate-900/90 border border-slate-700 hover:border-amber-400/70 transition flex items-start gap-3 cursor-pointer">
+                            <div class="w-10 h-10 rounded-lg bg-amber-500/15 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0 mt-0.5">
+                                <i class="fa-solid fa-table-list text-lg"></i>
+                            </div>
+                            <div>
+                                <div class="font-sport text-lg font-bold uppercase text-white tracking-wide leading-tight">MODE LIGA (Klasemen Penuh)</div>
+                                <p class="text-xs text-slate-400 mt-0.5">Semua pemain saling bertemu (Round-Robin) dengan tabel poin &amp; selisih gol.</p>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 3. Pilihan Format Pertandingan (Single Match vs Home & Away) -->
+                <div class="mb-6">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2.5">
+                        <i class="fa-solid fa-repeat text-sky-400 mr-1.5"></i> Sistem Pertandingan (Leg / Putaran)
+                    </label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <button type="button" id="btn-leg-single"
+                            class="text-left p-3.5 rounded-xl bg-emerald-500/15 border-2 border-emerald-400 transition flex items-center gap-3 cursor-pointer">
+                            <div class="w-9 h-9 rounded-lg bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-400 shrink-0 font-bold">
+                                1x
+                            </div>
+                            <div>
+                                <div id="label-leg-single" class="font-sport text-base font-bold uppercase text-white tracking-wide">Single Match (1x Main)</div>
+                                <div id="desc-leg-single" class="text-[11px] text-slate-300">1 pertandingan penentuan tiap babak</div>
+                            </div>
+                        </button>
+
+                        <button type="button" id="btn-leg-homeaway"
+                            class="text-left p-3.5 rounded-xl bg-slate-900/90 border border-slate-700 hover:border-amber-400/70 transition flex items-center gap-3 cursor-pointer">
+                            <div class="w-9 h-9 rounded-lg bg-amber-500/15 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0">
+                                <i class="fa-solid fa-arrows-left-right"></i>
+                            </div>
+                            <div>
+                                <div id="label-leg-homeaway" class="font-sport text-base font-bold uppercase text-white tracking-wide">Home &amp; Away (2 Leg)</div>
+                                <div id="desc-leg-homeaway" class="text-[11px] text-slate-400">Kandang &amp; Tandang + Hitung Agregat</div>
+                            </div>
+                        </button>
+                    </div>
+
+                    <!-- Opsi Tambahan Final 1x Netral saat CUP Home & Away dipilih -->
+                    <div id="cup-final-neutral-box" class="hidden mt-3 p-3 rounded-xl bg-slate-950/90 border border-amber-400/30 flex items-center justify-between gap-3">
+                        <label for="chk-final-neutral" class="flex items-center gap-2.5 text-xs text-slate-200 cursor-pointer select-none">
+                            <input type="checkbox" id="chk-final-neutral" checked
+                                class="w-4 h-4 rounded accent-amber-400 cursor-pointer">
+                            <span><strong class="text-amber-300">Final 1x (Tempat Netral):</strong> Babak Grand Final cukup 1x pertandingan penentuan (seperti Liga Champions)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 4. Jumlah Pemain -->
+                <div class="mb-6">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                        <label for="input-player-count" class="text-xs font-bold uppercase tracking-wider text-slate-300">
+                            <i class="fa-solid fa-users text-emerald-400 mr-1.5"></i> Jumlah Pemain (Peserta)
+                        </label>
+                        <span id="range-hint" class="text-[11px] text-slate-400 font-medium">Rentang: 2 – 64 Pemain</span>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <div class="flex items-center bg-slate-950/90 border border-slate-700 rounded-xl p-1 flex-1">
+                            <button type="button" id="btn-dec-count" class="w-11 h-11 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold transition cursor-pointer">
+                                <i class="fa-solid fa-minus"></i>
+                            </button>
+                            <input type="number" id="input-player-count" value="8" min="2" max="64"
+                                class="w-full bg-transparent text-center font-sport text-2xl font-bold text-white focus:outline-none">
+                            <button type="button" id="btn-inc-count" class="w-11 h-11 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold transition cursor-pointer">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </div>
+
+                        <!-- Preset Cepat -->
+                        <div class="flex items-center gap-2">
+                            <button type="button" data-preset="4" class="preset-btn flex-1 sm:w-12 h-13 py-3 rounded-xl bg-slate-900 hover:bg-emerald-500/20 border border-slate-700 hover:border-emerald-400 font-sport text-lg font-bold text-slate-200 transition cursor-pointer">4</button>
+                            <button type="button" data-preset="8" class="preset-btn flex-1 sm:w-12 h-13 py-3 rounded-xl bg-emerald-500/20 border border-emerald-400 font-sport text-lg font-bold text-emerald-300 transition cursor-pointer">8</button>
+                            <button type="button" data-preset="16" class="preset-btn flex-1 sm:w-12 h-13 py-3 rounded-xl bg-slate-900 hover:bg-emerald-500/20 border border-slate-700 hover:border-emerald-400 font-sport text-lg font-bold text-slate-200 transition cursor-pointer">16</button>
+                            <button type="button" data-preset="32" id="btn-preset-32" class="preset-btn flex-1 sm:w-12 h-13 py-3 rounded-xl bg-slate-900 hover:bg-emerald-500/20 border border-slate-700 hover:border-emerald-400 font-sport text-lg font-bold text-slate-200 transition cursor-pointer">32</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ringkasan Otomatis Format -->
+                <div class="p-4 rounded-xl bg-slate-950/90 border border-slate-800 mb-6 flex items-start gap-3">
+                    <div id="summary-icon" class="w-10 h-10 rounded-lg bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center text-emerald-400 shrink-0 mt-0.5">
+                        <i class="fa-solid fa-sitemap"></i>
+                    </div>
+                    <div class="text-xs leading-relaxed">
+                        <div class="flex flex-wrap items-center gap-2 mb-1">
+                            <span id="summary-title" class="font-bold text-white text-sm">CUP Single Match • Babak Perempat Final (8 Besar)</span>
+                            <span id="summary-badge" class="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 font-bold text-[10px]">Bagan Penuh</span>
+                        </div>
+                        <p id="summary-desc" class="text-slate-400">Terdiri dari 4 pertandingan di Babak 1 menuju Grand Final.</p>
+                    </div>
+                </div>
+
+                <!-- Tombol Lanjut ke Tahap 2 -->
+                <button type="button" id="btn-to-step-2"
+                    class="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-400 hover:from-emerald-400 hover:to-emerald-300 text-slate-950 font-sport text-2xl font-bold uppercase tracking-wider shadow-lg shadow-emerald-500/25 transition flex items-center justify-center gap-2.5 cursor-pointer">
+                    <span>Lanjut Input Nama Pemain</span>
+                    <i class="fa-solid fa-arrow-right text-lg"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- TAHAP 2: INPUT NAMA PEMAIN                                -->
+        <!-- ========================================================= -->
+        <section id="section-step-2" class="hidden max-w-3xl mx-auto">
+            <div class="pitch-card rounded-2xl p-5 sm:p-8 shadow-2xl">
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800">
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-xl bg-amber-500/15 border border-amber-400/30 flex items-center justify-center text-amber-400">
+                            <i class="fa-solid fa-shirt text-lg"></i>
+                        </div>
+                        <div>
+                            <span class="text-[11px] font-bold uppercase tracking-widest text-amber-400">Tahap 2 dari 3</span>
+                            <h2 class="font-sport text-2xl sm:text-3xl font-bold uppercase tracking-wide text-white leading-none">
+                                Daftar Pemain (<span id="label-total-players">8</span> Peserta)
+                            </h2>
+                        </div>
+                    </div>
+
+                    <!-- Tombol Alat Bantu Cepat -->
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button type="button" id="btn-fill-sample"
+                            class="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-emerald-300 transition flex items-center gap-1.5 cursor-pointer">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>Isi Contoh Nama</span>
+                        </button>
+                        <button type="button" id="btn-open-bulk"
+                            class="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-sky-300 transition flex items-center gap-1.5 cursor-pointer">
+                            <i class="fa-solid fa-paste"></i>
+                            <span>Tempel Banyak Nama</span>
+                        </button>
+                        <button type="button" id="btn-shuffle-inputs"
+                            class="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-amber-300 transition flex items-center gap-1.5 cursor-pointer">
+                            <i class="fa-solid fa-shuffle"></i>
+                            <span>Acak Urutan Input</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Grid Input Pemain -->
+                <div id="player-inputs-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[55vh] overflow-y-auto pr-1 mb-6">
+                    <!-- Input row akan di-render lewat JS -->
+                </div>
+
+                <!-- Navigasi Tahap 2 -->
+                <div class="flex flex-col sm:flex-row items-center gap-3 pt-4 border-t border-slate-800">
+                    <button type="button" id="btn-back-step-1"
+                        class="w-full sm:w-auto px-5 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-semibold text-sm transition flex items-center justify-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        <span>Kembali</span>
+                    </button>
+
+                    <button type="button" id="btn-start-draw"
+                        class="w-full flex-1 py-4 px-6 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-emerald-400 hover:brightness-110 text-slate-950 font-sport text-2xl font-bold uppercase tracking-wider shadow-lg shadow-amber-500/20 transition flex items-center justify-center gap-2.5 cursor-pointer">
+                        <i class="fa-solid fa-futbol"></i>
+                        <span>Kocok Pemain Sekarang!</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- OVERLAY ANIMASI PENGOCOKAN                                -->
+        <!-- ========================================================= -->
+        <section id="section-shuffle-overlay" class="hidden max-w-lg mx-auto py-12">
+            <div class="pitch-card pitch-stripe rounded-2xl p-8 text-center border-2 border-emerald-400/50 shadow-2xl">
+                <div class="w-20 h-20 mx-auto mb-5 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-500/30">
+                    <i class="fa-solid fa-futbol text-4xl animate-ball"></i>
+                </div>
+                <span class="text-xs font-extrabold uppercase tracking-widest text-amber-400">Official PES Draw Engine</span>
+                <h2 class="font-sport text-3xl sm:text-4xl font-bold uppercase text-white mt-1 mb-3">Mengocok Pot Pemain...</h2>
+                <div id="shuffle-ticker" class="py-3 px-4 rounded-xl bg-slate-950/90 border border-slate-800 font-sport text-2xl text-emerald-300 tracking-wide uppercase">
+                    Mempersiapkan Undian...
+                </div>
+                <p class="text-xs text-slate-400 mt-3">Mengacak posisi menggunakan algoritma Fisher-Yates...</p>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- TAHAP 3: HASIL UNDIAN & MANAJEMEN PERTANDINGAN            -->
+        <!-- ========================================================= -->
+        <section id="section-step-3" class="hidden space-y-6">
+            <!-- Header Hasil & Tombol Aksi -->
+            <div class="pitch-card rounded-2xl p-5 sm:p-6 shadow-xl">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div>
+                        <div class="flex flex-wrap items-center gap-2 mb-1">
+                            <span id="res-mode-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                                MODE CUP
+                            </span>
+                            <span id="res-leg-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-400/30">
+                                Single Match
+                            </span>
+                        </div>
+                        <h2 id="res-tournament-title" class="font-sport text-3xl sm:text-4xl font-bold uppercase text-white tracking-wide leading-tight">
+                            PES CHAMPIONSHIP 2026
+                        </h2>
+                        <p id="res-subtitle" class="text-xs sm:text-sm text-slate-400">8 Pemain • Babak Perempat Final</p>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button type="button" id="btn-reshuffle"
+                            class="px-3.5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-bold text-amber-300 transition flex items-center gap-1.5 cursor-pointer">
+                            <i class="fa-solid fa-rotate"></i>
+                            <span>Kocok Ulang</span>
+                        </button>
+                        <button type="button" id="btn-edit-setup"
+                            class="px-3.5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-bold text-slate-300 transition flex items-center gap-1.5 cursor-pointer">
+                            <i class="fa-solid fa-sliders"></i>
+                            <span>Ubah Pengaturan</span>
+                        </button>
+                        <button type="button" id="btn-copy-text"
+                            class="px-3.5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-bold text-sky-300 transition flex items-center gap-1.5 cursor-pointer">
+                            <i class="fa-regular fa-copy"></i>
+                            <span>Salin Teks</span>
+                        </button>
+                        <button type="button" id="btn-share-wa"
+                            class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 hover:brightness-110 text-slate-950 text-xs font-extrabold uppercase tracking-wider shadow-lg shadow-emerald-500/20 transition flex items-center gap-2 cursor-pointer">
+                            <i class="fa-brands fa-whatsapp text-base"></i>
+                            <span>Share ke WhatsApp</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===================================================== -->
+            <!-- TAMPILAN KHUSUS MODE CUP                              -->
+            <!-- ===================================================== -->
+            <div id="cup-view-wrapper" class="space-y-6">
+                <!-- Tab Switcher CUP -->
+                <div class="flex items-center gap-2 bg-slate-900/90 p-1.5 rounded-xl border border-slate-800 w-fit">
+                    <button type="button" id="tab-cup-schedule"
+                        class="px-4 py-2 rounded-lg text-xs sm:text-sm font-bold bg-emerald-500 text-slate-950 shadow transition flex items-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-list-ol"></i>
+                        <span>Jadwal &amp; Hasil Undian</span>
+                    </button>
+                    <button type="button" id="tab-cup-bracket"
+                        class="px-4 py-2 rounded-lg text-xs sm:text-sm font-bold text-slate-400 hover:text-white transition flex items-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-sitemap"></i>
+                        <span>Bagan Turnamen (Bracket)</span>
+                    </button>
+                </div>
+
+                <!-- TAB 1 CUP: Urutan Kocokan + Siapa Lawan Siapa -->
+                <div id="cup-panel-schedule" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <!-- Kolom Kiri: Urutan Hasil Kocokan -->
+                    <div class="lg:col-span-4 pitch-card rounded-2xl p-5">
+                        <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
+                            <h3 class="font-sport text-xl font-bold uppercase text-white tracking-wide">
+                                <i class="fa-solid fa-hashtag text-emerald-400 mr-1.5"></i> Urutan Hasil Kocokan
+                            </h3>
+                            <span id="cup-pot-count" class="text-xs font-bold text-slate-400">8 Pemain</span>
+                        </div>
+                        <div id="cup-draw-order-list" class="space-y-2">
+                            <!-- List urutan pemain -->
+                        </div>
+                    </div>
+
+                    <!-- Kolom Kanan: Siapa Lawan Siapa (Babak 1) -->
+                    <div class="lg:col-span-8 pitch-card rounded-2xl p-5">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-800">
+                            <h3 class="font-sport text-xl font-bold uppercase text-white tracking-wide">
+                                <i class="fa-solid fa-fire text-amber-400 mr-1.5"></i> Siapa Lawan Siapa (Babak 1)
+                            </h3>
+                            <span class="text-xs text-slate-400">Buka tab <strong>Bagan Turnamen</strong> untuk input skor &amp; lanjut ke Final</span>
+                        </div>
+                        <div id="cup-matchups-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                            <!-- Kartu matchup Babak 1 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2 CUP: Bagan Turnamen Interaktif -->
+                <div id="cup-panel-bracket" class="hidden space-y-5">
+                    <!-- Banner Juara (Muncul saat Grand Final selesai) -->
+                    <div id="champion-banner" class="hidden rounded-2xl bg-gradient-to-r from-amber-500/20 via-yellow-500/20 to-emerald-500/20 border-2 border-amber-400 p-6 text-center shadow-2xl">
+                        <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-amber-400 text-slate-950 mb-2 shadow-lg">
+                            <i class="fa-solid fa-trophy text-2xl"></i>
+                        </div>
+                        <div class="text-xs font-extrabold uppercase tracking-widest text-amber-300">CHAMPION / JUARA TURNAMEN</div>
+                        <div id="champion-name" class="font-sport text-4xl sm:text-5xl font-bold uppercase text-white tracking-wide mt-1">NAMA JUARA</div>
+                    </div>
+
+                    <div class="pitch-card pitch-stripe rounded-2xl p-5">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-800">
+                            <div>
+                                <h3 class="font-sport text-2xl font-bold uppercase text-white tracking-wide">Bagan Knockout Interaktif</h3>
+                                <p id="bracket-helper-text" class="text-xs text-slate-400">Klik nama pemain yang menang untuk meloloskannya ke babak berikutnya.</p>
+                            </div>
+                            <button type="button" id="btn-reset-bracket"
+                                class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-300 transition cursor-pointer">
+                                <i class="fa-solid fa-arrow-rotate-left mr-1"></i> Reset Skor Bagan
+                            </button>
+                        </div>
+
+                        <!-- Horizontal Scroll Bracket Tree -->
+                        <div class="overflow-x-auto pb-4">
+                            <div id="bracket-tree-container" class="flex items-stretch gap-6 min-w-max">
+                                <!-- Kolom babak dirender lewat JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===================================================== -->
+            <!-- TAMPILAN KHUSUS MODE LIGA                             -->
+            <!-- ===================================================== -->
+            <div id="league-view-wrapper" class="hidden space-y-6">
+                <!-- Tabel Klasemen Live -->
+                <div class="pitch-card rounded-2xl p-5 overflow-hidden">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-800">
+                        <div>
+                            <h3 class="font-sport text-2xl font-bold uppercase text-white tracking-wide">
+                                <i class="fa-solid fa-ranking-star text-amber-400 mr-1.5"></i> Klasemen Liga (Live Standings)
+                            </h3>
+                            <p class="text-xs text-slate-400">Menang = 3 Poin • Seri = 1 Poin • Kalah = 0 Poin (Urutan: Poin &gt; Selisih Gol &gt; Gol Masuk)</p>
+                        </div>
+                        <button type="button" id="btn-reset-league-scores"
+                            class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-300 transition cursor-pointer">
+                            <i class="fa-solid fa-arrow-rotate-left mr-1"></i> Reset Semua Skor
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                            <thead>
+                                <tr class="bg-slate-950/90 text-slate-400 uppercase text-[11px] font-bold border-b border-slate-800">
+                                    <th class="py-3 px-3 text-center w-12">Pos</th>
+                                    <th class="py-3 px-3">Pemain</th>
+                                    <th class="py-3 px-2.5 text-center" title="Main">Main</th>
+                                    <th class="py-3 px-2.5 text-center text-emerald-400" title="Menang">M</th>
+                                    <th class="py-3 px-2.5 text-center text-amber-400" title="Seri">S</th>
+                                    <th class="py-3 px-2.5 text-center text-rose-400" title="Kalah">K</th>
+                                    <th class="py-3 px-2.5 text-center" title="Gol Masuk">GM</th>
+                                    <th class="py-3 px-2.5 text-center" title="Gol Kemasukan">GK</th>
+                                    <th class="py-3 px-2.5 text-center" title="Selisih Gol">SG</th>
+                                    <th class="py-3 px-3 text-center text-white font-extrabold">Poin</th>
+                                </tr>
+                            </thead>
+                            <tbody id="league-standings-body" class="divide-y divide-slate-800/80">
+                                <!-- Baris klasemen dirender lewat JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Jadwal Pertandingan Per Pekan -->
+                <div class="pitch-card rounded-2xl p-5">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-800">
+                        <h3 class="font-sport text-2xl font-bold uppercase text-white tracking-wide">
+                            <i class="fa-solid fa-calendar-days text-emerald-400 mr-1.5"></i> Jadwal Pertandingan &amp; Input Skor
+                        </h3>
+                        <span id="league-weeks-badge" class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-xs font-bold text-slate-300">
+                            7 Pekan
+                        </span>
+                    </div>
+                    <div id="league-matchdays-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Kartu Matchday dirender lewat JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL TEMPEL BANYAK NAMA (BULK PASTE) -->
+    <div id="modal-bulk-paste" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="pitch-card rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-700">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="font-sport text-2xl font-bold uppercase text-white">Tempel Daftar Nama Pemain</h3>
+                <button type="button" id="btn-close-bulk" class="w-8 h-8 rounded-lg bg-slate-900 text-slate-400 hover:text-white flex items-center justify-center cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <p class="text-xs text-slate-400 mb-3">Tempel daftar nama pemain (1 nama per baris) dari grup WhatsApp atau catatan Anda:</p>
+            <textarea id="bulk-paste-textarea" rows="8" placeholder="Andi (Real Madrid)&#10;Budi (Barcelona)&#10;Rizky (Man City)&#10;Dimas (Liverpool)"
+                class="w-full bg-slate-950 border border-slate-700 focus:border-emerald-400 rounded-xl p-3 text-sm text-white focus:outline-none mb-3"></textarea>
+            <div class="flex items-center justify-between">
+                <span id="bulk-detected-count" class="text-xs text-emerald-400 font-semibold">0 nama terdeteksi</span>
+                <div class="flex items-center gap-2">
+                    <button type="button" id="btn-cancel-bulk" class="px-4 py-2 rounded-xl bg-slate-900 text-xs font-bold text-slate-300 cursor-pointer">Batal</button>
+                    <button type="button" id="btn-apply-bulk" class="px-4 py-2 rounded-xl bg-emerald-500 text-slate-950 text-xs font-extrabold cursor-pointer">Terapkan Nama</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="mt-auto border-t border-slate-800/80 bg-slate-950/90 py-5 px-4">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-futbol text-emerald-400"></i>
+                <span class="font-semibold text-slate-300">PES CUP &amp; LIGA Tournament Draw Manager</span>
+            </div>
+            <div class="flex items-center gap-1.5 text-slate-300 font-medium">
+                <span>Aplikasi ini dikembangkan oleh</span>
+                <span class="px-2.5 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 font-bold tracking-wide">Roby EV</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ========================================================= -->
+    <!-- JAVASCRIPT ENGINE (CLEAN, SELF-CONTAINED & BUG-FREE)      -->
+    <!-- ========================================================= -->
+    <script>
+        (function () {
+            'use strict';
+
+            // Data Contoh Pemain PES Indonesia
+            const SAMPLE_NAMES = [
+                'Rizky (Real Madrid)', 'Andi (Man City)', 'Dimas (Bayern)', 'Fajar (Liverpool)',
+                'Bagas (Arsenal)', 'Ilham (Barcelona)', 'Bayu (Inter Milan)', 'Deni (PSG)',
+                'Agung (AC Milan)', 'Reza (Juventus)', 'Wahyu (Chelsea)', 'Hendra (Man Utd)',
+                'Arif (Atletico)', 'Yoga (Dortmund)', 'Rama (Napoli)', 'Taufik (Leverkusen)',
+                'Galih (Tottenham)', 'Eko (AS Roma)', 'Iqbal (Benfica)', 'Nanda (Porto)',
+                'Surya (Ajax)', 'Putra (RB Leipzig)', 'Kevin (Newcastle)', 'Alvin (Aston Villa)',
+                'Gilang (Sevilla)', 'Farhan (Lazio)', 'Adit (Fiorentina)', 'Rian (Real Sociedad)',
+                'Bima (Villarreal)', 'Zaki (Sporting CP)', 'Hafiz (PSV)', 'Yusuf (Feyenoord)'
+            ];
+
+            // State Aplikasi
+            const appState = {
+                step: 1,
+                tournamentName: 'PES CHAMPIONSHIP 2026',
+                mode: 'cup',          // 'cup' | 'league'
+                legSystem: 'single',  // 'single' | 'homeaway'
+                finalNeutral: true,   // true = Final 1x netral saat CUP Home & Away
+                playerCount: 8,
+                players: [],
+                shuffledPlayers: [],
+                bracketSize: 8,
+                bracketRounds: [],
+                leagueMatchdays: []
+            };
+
+            // Helper DOM
+            const $ = (id) => document.getElementById(id);
+
+            function escapeHtml(str) {
+                if (str === null || str === undefined) return '';
+                return String(str)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+            }
+
+            let toastTimer = null;
+            function showToast(msg, type = 'success') {
+                const box = $('toast-box');
+                const content = $('toast-content');
+                const icon = $('toast-icon');
+                const text = $('toast-message');
+
+                text.textContent = msg;
+                if (type === 'warning') {
+                    content.className = 'flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl border text-sm font-medium bg-slate-900 border-amber-400/60 text-amber-200';
+                    icon.className = 'fa-solid fa-triangle-exclamation text-amber-400';
+                } else {
+                    content.className = 'flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl border text-sm font-medium bg-slate-900 border-emerald-400/60 text-white';
+                    icon.className = 'fa-solid fa-circle-check text-emerald-400';
+                }
+
+                box.classList.remove('hidden');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => {
+                    box.classList.add('hidden');
+                }, 3200);
+            }
+
+            // =========================================================
+            // LOGIKA TAHAP 1: PENGATURAN TURNAMEN
+            // =========================================================
+            function setMode(mode) {
+                appState.mode = mode;
+                const btnCup = $('btn-mode-cup');
+                const btnLeague = $('btn-mode-league');
+                const countInput = $('input-player-count');
+                const preset32 = $('btn-preset-32');
+                const titleInput = $('input-tournament-name');
+
+                if (mode === 'cup') {
+                    btnCup.className = 'text-left p-4 rounded-xl bg-emerald-500/15 border-2 border-emerald-400 transition flex items-start gap-3 cursor-pointer';
+                    btnLeague.className = 'text-left p-4 rounded-xl bg-slate-900/90 border border-slate-700 hover:border-amber-400/70 transition flex items-start gap-3 cursor-pointer';
+                    $('range-hint').textContent = 'Rentang: 2 – 64 Pemain';
+                    countInput.min = 2;
+                    countInput.max = 64;
+                    preset32.classList.remove('hidden');
+
+                    $('label-leg-single').textContent = 'Single Match (1x Main)';
+                    $('desc-leg-single').textContent = '1 pertandingan penentuan tiap babak';
+                    $('label-leg-homeaway').textContent = 'Home & Away (2 Leg)';
+                    $('desc-leg-homeaway').textContent = 'Kandang & Tandang + Hitung Agregat';
+
+                    if (titleInput.value === 'PES LIGA CHAMPIONSHIP 2026') {
+                        titleInput.value = 'PES CHAMPIONSHIP 2026';
+                    }
+                } else {
+                    btnLeague.className = 'text-left p-4 rounded-xl bg-amber-500/15 border-2 border-amber-400 transition flex items-start gap-3 cursor-pointer';
+                    btnCup.className = 'text-left p-4 rounded-xl bg-slate-900/90 border border-slate-700 hover:border-emerald-400/70 transition flex items-start gap-3 cursor-pointer';
+                    $('range-hint').textContent = 'Rentang: 3 – 20 Pemain';
+                    countInput.min = 3;
+                    countInput.max = 20;
+                    preset32.classList.add('hidden');
+
+                    $('label-leg-single').textContent = '1 Putaran (Single Round-Robin)';
+                    $('desc-leg-single').textContent = 'Setiap pemain bertemu 1 kali';
+                    $('label-leg-homeaway').textContent = 'Home & Away (2 Putaran)';
+                    $('desc-leg-homeaway').textContent = 'Setiap pemain bertemu 2 kali (Kandang & Tandang)';
+
+                    if (titleInput.value === 'PES CHAMPIONSHIP 2026') {
+                        titleInput.value = 'PES LIGA CHAMPIONSHIP 2026';
+                    }
+                }
+
+                updateFinalNeutralVisibility();
+                validateAndSyncCount(countInput.value);
+            }
+
+            function setLegSystem(leg) {
+                appState.legSystem = leg;
+                const btnSingle = $('btn-leg-single');
+                const btnHa = $('btn-leg-homeaway');
+
+                if (leg === 'single') {
+                    btnSingle.className = 'text-left p-3.5 rounded-xl bg-emerald-500/15 border-2 border-emerald-400 transition flex items-center gap-3 cursor-pointer';
+                    btnHa.className = 'text-left p-3.5 rounded-xl bg-slate-900/90 border border-slate-700 hover:border-amber-400/70 transition flex items-center gap-3 cursor-pointer';
+                } else {
+                    btnHa.className = 'text-left p-3.5 rounded-xl bg-amber-500/15 border-2 border-amber-400 transition flex items-center gap-3 cursor-pointer';
+                    btnSingle.className = 'text-left p-3.5 rounded-xl bg-slate-900/90 border border-slate-700 hover:border-emerald-400/70 transition flex items-center gap-3 cursor-pointer';
+                }
+
+                updateFinalNeutralVisibility();
+                updateStep1Summary();
+            }
+
+            function updateFinalNeutralVisibility() {
+                const box = $('cup-final-neutral-box');
+                if (appState.mode === 'cup' && appState.legSystem === 'homeaway') {
+                    box.classList.remove('hidden');
+                } else {
+                    box.classList.add('hidden');
+                }
+            }
+
+            function getNextPowerOfTwo(n) {
+                let p = 2;
+                while (p < n) p *= 2;
+                return p;
+            }
+
+            function getCupRoundTitle(size) {
+                if (size === 2) return 'Grand Final';
+                if (size === 4) return 'Semifinal (4 Besar)';
+                if (size === 8) return 'Perempat Final (8 Besar)';
+                if (size === 16) return '16 Besar';
+                if (size === 32) return '32 Besar';
+                return '64 Besar';
+            }
+
+            function validateAndSyncCount(rawVal) {
+                const min = appState.mode === 'league' ? 3 : 2;
+                const max = appState.mode === 'league' ? 20 : 64;
+                let val = parseInt(rawVal, 10);
+                if (isNaN(val)) val = min;
+                if (val < min) val = min;
+                if (val > max) val = max;
+
+                appState.playerCount = val;
+                $('input-player-count').value = val;
+
+                // Highlight preset button
+                document.querySelectorAll('.preset-btn').forEach((btn) => {
+                    const p = parseInt(btn.getAttribute('data-preset'), 10);
+                    if (p === val) {
+                        btn.className = 'preset-btn flex-1 sm:w-12 h-13 py-3 rounded-xl bg-emerald-500/20 border border-emerald-400 font-sport text-lg font-bold text-emerald-300 transition cursor-pointer';
+                    } else {
+                        btn.className = 'preset-btn flex-1 sm:w-12 h-13 py-3 rounded-xl bg-slate-900 hover:bg-emerald-500/20 border border-slate-700 hover:border-emerald-400 font-sport text-lg font-bold text-slate-200 transition cursor-pointer';
+                    }
+                });
+
+                updateStep1Summary();
+            }
+
+            function updateStep1Summary() {
+                const count = appState.playerCount;
+                const iconBox = $('summary-icon');
+                const titleEl = $('summary-title');
+                const badgeEl = $('summary-badge');
+                const descEl = $('summary-desc');
+
+                if (appState.mode === 'league') {
+                    iconBox.innerHTML = '<i class="fa-solid fa-table-list"></i>';
+                    iconBox.className = 'w-10 h-10 rounded-lg bg-amber-500/15 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0 mt-0.5';
+
+                    const mult = appState.legSystem === 'homeaway' ? 2 : 1;
+                    const totalMatches = ((count * (count - 1)) / 2) * mult;
+                    const totalWeeks = (count % 2 === 0 ? count - 1 : count) * mult;
+
+                    titleEl.textContent = `LIGA ${appState.legSystem === 'homeaway' ? 'Home & Away (2 Putaran)' : '1 Putaran'} • ${count} Pemain`;
+                    badgeEl.textContent = `${totalWeeks} Pekan`;
+                    badgeEl.className = 'px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold text-[10px]';
+                    descEl.innerHTML = `Total <strong>${totalMatches} pertandingan</strong> dalam <strong>${totalWeeks} Pekan (Matchday)</strong> dengan tabel klasemen otomatis.`;
+                } else {
+                    iconBox.innerHTML = '<i class="fa-solid fa-sitemap"></i>';
+                    iconBox.className = 'w-10 h-10 rounded-lg bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center text-emerald-400 shrink-0 mt-0.5';
+
+                    const bSize = getNextPowerOfTwo(count);
+                    const byes = bSize - count;
+                    const activeMatches = (bSize / 2) - byes;
+                    const legText = appState.legSystem === 'homeaway' ? 'Home & Away (2 Leg)' : 'Single Match';
+
+                    titleEl.textContent = `CUP ${legText} • Babak ${getCupRoundTitle(bSize)}`;
+                    if (byes === 0) {
+                        badgeEl.textContent = 'Bagan Penuh';
+                        badgeEl.className = 'px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold text-[10px]';
+                        descEl.innerHTML = `Terdiri dari <strong>${bSize / 2} pertandingan</strong> di Babak 1 menuju Grand Final.`;
+                    } else {
+                        badgeEl.textContent = `${byes} Slot BYE`;
+                        badgeEl.className = 'px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold text-[10px]';
+                        descEl.innerHTML = `Bagan ${bSize} slot: <strong>${activeMatches} pertandingan aktif</strong> di Babak 1 dan <strong>${byes} pemain</strong> otomatis lolos (<em>BYE</em>).`;
+                    }
+                }
+            }
+
+            // =========================================================
+            // NAVIGASI ANTAR TAHAP (1, 2, 3)
+            // =========================================================
+            function navigateToStep(targetStep) {
+                if (targetStep === 2) {
+                    const titleVal = $('input-tournament-name').value.trim();
+                    appState.tournamentName = titleVal || (appState.mode === 'cup' ? 'PES CHAMPIONSHIP 2026' : 'PES LIGA CHAMPIONSHIP 2026');
+                    appState.finalNeutral = $('chk-final-neutral').checked;
+                    validateAndSyncCount($('input-player-count').value);
+                    renderPlayerInputRows();
+                } else if (targetStep === 3) {
+                    if (!appState.shuffledPlayers || appState.shuffledPlayers.length < 2) {
+                        showToast('Lengkapi nama pemain dan klik Kocok Pemain terlebih dahulu.', 'warning');
+                        return;
+                    }
+                }
+
+                appState.step = targetStep;
+                ['section-step-1', 'section-step-2', 'section-shuffle-overlay', 'section-step-3'].forEach((secId) => {
+                    $(secId).classList.add('hidden');
+                });
+                $(`section-step-${targetStep}`).classList.remove('hidden');
+
+                // Update Stepper Nav
+                [1, 2, 3].forEach((n) => {
+                    const btn = $(`step-nav-${n}`);
+                    const circle = btn.querySelector('span:first-child');
+                    if (n === targetStep) {
+                        btn.className = 'step-nav-btn flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 text-slate-950 shadow transition cursor-pointer';
+                        circle.className = 'w-4 h-4 rounded-full bg-slate-950/20 flex items-center justify-center text-[10px]';
+                    } else {
+                        btn.className = 'step-nav-btn flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition cursor-pointer';
+                        circle.className = 'w-4 h-4 rounded-full bg-slate-800 flex items-center justify-center text-[10px]';
+                    }
+                });
+
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            // =========================================================
+            // LOGIKA TAHAP 2: INPUT NAMA PEMAIN
+            // =========================================================
+            function renderPlayerInputRows() {
+                const count = appState.playerCount;
+                $('label-total-players').textContent = count;
+                const container = $('player-inputs-container');
+
+                // Simpan nilai lama jika ada
+                const existingValues = Array.from(container.querySelectorAll('.player-name-field')).map((el) => el.value);
+
+                let html = '';
+                for (let i = 0; i < count; i++) {
+                    const savedVal = existingValues[i] !== undefined ? existingValues[i] : (appState.players[i] || '');
+                    html += `
+                        <div class="flex items-center gap-2.5 bg-slate-950/90 border border-slate-800 focus-within:border-emerald-400 rounded-xl px-3 py-2 transition">
+                            <span class="w-7 h-7 rounded-lg bg-slate-900 border border-slate-700 flex items-center justify-center text-xs font-extrabold text-emerald-400 shrink-0">
+                                ${i + 1}
+                            </span>
+                            <input type="text" class="player-name-field w-full bg-transparent text-sm text-white placeholder-slate-500 focus:outline-none"
+                                placeholder="Nama Player ${i + 1}" value="${escapeHtml(savedVal)}">
+                        </div>
+                    `;
+                }
+                container.innerHTML = html;
+            }
+
+            function collectPlayerNames() {
+                const fields = Array.from(document.querySelectorAll('.player-name-field'));
+                return fields.map((input, idx) => {
+                    const val = input.value.trim();
+                    return val !== '' ? val : `Player ${idx + 1}`;
+                });
+            }
+
+            function fillSamplePlayers() {
+                const fields = Array.from(document.querySelectorAll('.player-name-field'));
+                fields.forEach((input, idx) => {
+                    if (idx < SAMPLE_NAMES.length) {
+                        input.value = SAMPLE_NAMES[idx];
+                    } else {
+                        input.value = `PES Player ${idx + 1}`;
+                    }
+                });
+                appState.players = collectPlayerNames();
+                showToast('Contoh nama pemain berhasil diisi!');
+            }
+
+            function shuffleInputOrder() {
+                const names = collectPlayerNames();
+                fisherYatesShuffle(names);
+                const fields = Array.from(document.querySelectorAll('.player-name-field'));
+                fields.forEach((input, idx) => {
+                    input.value = names[idx] || '';
+                });
+                showToast('Urutan input pemain telah diacak.');
+            }
+
+            // Algoritma Pengocokan Fisher-Yates
+            function fisherYatesShuffle(arr) {
+                for (let i = arr.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    const temp = arr[i];
+                    arr[i] = arr[j];
+                    arr[j] = temp;
+                }
+                return arr;
+            }
+
+            // =========================================================
+            // PROSES PENGOCOKAN & PEMBENTUKAN DATA TURNAMEN
+            // =========================================================
+            function runDrawAnimationAndBuild() {
+                appState.players = collectPlayerNames();
+                const pool = [...appState.players];
+                fisherYatesShuffle(pool);
+                appState.shuffledPlayers = pool;
+
+                // Tampilkan overlay animasi pengocokan
+                ['section-step-1', 'section-step-2', 'section-step-3'].forEach((id) => $(id).classList.add('hidden'));
+                $('section-shuffle-overlay').classList.remove('hidden');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                const ticker = $('shuffle-ticker');
+                let ticks = 0;
+                const maxTicks = 15;
+                const interval = setInterval(() => {
+                    const randIdx = Math.floor(Math.random() * pool.length);
+                    ticker.textContent = pool[randIdx];
+                    ticks++;
+                    if (ticks >= maxTicks) {
+                        clearInterval(interval);
+                        if (appState.mode === 'cup') {
+                            buildCupBracketData();
+                        } else {
+                            buildLeagueData();
+                        }
+                        renderStep3View();
+                        navigateToStep(3);
+                        showToast('Pengocokan selesai! Jadwal turnamen siap digunakan.');
+                    }
+                }, 90);
+            }
+
+            // =========================================================
+            // MODE CUP: PEMBENTUKAN BAGAN & LOGIKA KNOCKOUT / AGREGAT
+            // =========================================================
+            function buildCupBracketData() {
+                const players = [...appState.shuffledPlayers];
+                const bSize = getNextPowerOfTwo(players.length);
+                appState.bracketSize = bSize;
+
+                const totalRounds = Math.log2(bSize);
+                const round0MatchesCount = bSize / 2;
+                const byeCount = bSize - players.length;
+
+                // Sebar slot BYE secara merata di pasangan babak 1
+                const pairs = [];
+                let pCursor = 0;
+                for (let m = 0; m < round0MatchesCount; m++) {
+                    if (m < byeCount) {
+                        pairs.push({ p1: players[pCursor++], p2: 'BYE', isBye: true });
+                    } else {
+                        pairs.push({ p1: players[pCursor++], p2: players[pCursor++], isBye: false });
+                    }
+                }
+
+                const rounds = [];
+                const isR0TwoLeg = appState.legSystem === 'homeaway' && (totalRounds > 1 || !appState.finalNeutral);
+
+                rounds.push(pairs.map((pair, idx) => ({
+                    roundIndex: 0,
+                    matchIndex: idx,
+                    p1: pair.p1,
+                    p2: pair.p2,
+                    isBye: pair.isBye,
+                    isTwoLeg: !pair.isBye && isR0TwoLeg,
+                    leg1P1: '',
+                    leg1P2: '',
+                    leg2P1: '',
+                    leg2P2: '',
+                    winner: pair.isBye ? pair.p1 : null
+                })));
+
+                for (let r = 1; r < totalRounds; r++) {
+                    const count = bSize / Math.pow(2, r + 1);
+                    const isFinal = r === totalRounds - 1;
+                    const isTwoLeg = appState.legSystem === 'homeaway' && (!isFinal || !appState.finalNeutral);
+                    const rMatches = [];
+                    for (let m = 0; m < count; m++) {
+                        rMatches.push({
+                            roundIndex: r,
+                            matchIndex: m,
+                            p1: null,
+                            p2: null,
+                            isBye: false,
+                            isTwoLeg: isTwoLeg,
+                            leg1P1: '',
+                            leg1P2: '',
+                            leg2P1: '',
+                            leg2P2: '',
+                            winner: null
+                        });
+                    }
+                    rounds.push(rMatches);
+                }
+
+                appState.bracketRounds = rounds;
+
+                // Otomatis majukan pemain yang mendapat BYE ke babak 2
+                rounds[0].forEach((match, mIdx) => {
+                    if (match.isBye && match.winner) {
+                        advanceWinnerToNextRound(0, mIdx, match.winner);
+                    }
+                });
+            }
+
+            function advanceWinnerToNextRound(rIdx, mIdx, winnerName) {
+                const totalRounds = appState.bracketRounds.length;
+                if (rIdx + 1 >= totalRounds) return;
+
+                let currR = rIdx;
+                let currM = mIdx;
+                let playerToPlace = winnerName;
+
+                while (currR + 1 < totalRounds) {
+                    const nextR = currR + 1;
+                    const nextM = Math.floor(currM / 2);
+                    const isTopSlot = currM % 2 === 0;
+                    const targetMatch = appState.bracketRounds[nextR][nextM];
+
+                    if (isTopSlot) {
+                        targetMatch.p1 = playerToPlace;
+                    } else {
+                        targetMatch.p2 = playerToPlace;
+                    }
+
+                    // Reset skor & pemenang di babak lanjutan jika peserta berubah
+                    targetMatch.winner = null;
+                    targetMatch.leg1P1 = '';
+                    targetMatch.leg1P2 = '';
+                    targetMatch.leg2P1 = '';
+                    targetMatch.leg2P2 = '';
+
+                    currR = nextR;
+                    currM = nextM;
+                    playerToPlace = null;
+                }
+            }
+
+            function setCupMatchWinner(rIdx, mIdx, winnerName) {
+                const match = appState.bracketRounds[rIdx][mIdx];
+                if (!winnerName || winnerName === 'BYE') return;
+
+                match.winner = winnerName;
+                const totalRounds = appState.bracketRounds.length;
+
+                if (rIdx + 1 < totalRounds) {
+                    advanceWinnerToNextRound(rIdx, mIdx, winnerName);
+                    $('champion-banner').classList.add('hidden');
+                } else {
+                    $('champion-name').textContent = winnerName;
+                    $('champion-banner').classList.remove('hidden');
+                    showToast(`🏆 ${winnerName} menjadi Juara ${appState.tournamentName}!`);
+                }
+
+                renderCupBracket();
+            }
+
+            function renderCupScheduleTab() {
+                const players = appState.shuffledPlayers;
+                $('cup-pot-count').textContent = `${players.length} Pemain`;
+
+                // 1. Urutan Hasil Kocokan
+                $('cup-draw-order-list').innerHTML = players.map((p, idx) => `
+                    <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-950/90 border border-slate-800">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <span class="w-6 h-6 rounded-lg bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center text-xs font-extrabold text-emerald-400 shrink-0">
+                                ${idx + 1}
+                            </span>
+                            <span class="text-sm font-semibold text-white truncate">${escapeHtml(p)}</span>
+                        </div>
+                        <span class="text-[10px] font-bold uppercase text-slate-500">Slot ${idx + 1}</span>
+                    </div>
+                `).join('');
+
+                // 2. Siapa Lawan Siapa (Babak 1)
+                const round0 = appState.bracketRounds[0] || [];
+                $('cup-matchups-grid').innerHTML = round0.map((m, idx) => {
+                    if (m.isBye) {
+                        return `
+                            <div class="p-4 rounded-xl bg-slate-950/90 border border-amber-400/30 flex flex-col justify-between">
+                                <div class="flex items-center justify-between text-[11px] font-bold uppercase mb-2">
+                                    <span class="text-amber-400">Match ${idx + 1}</span>
+                                    <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px]">AUTO-BYE</span>
+                                </div>
+                                <div class="flex items-center justify-between bg-slate-900 px-3 py-2.5 rounded-lg border border-slate-800">
+                                    <span class="font-bold text-sm text-white truncate">${escapeHtml(m.p1)}</span>
+                                    <span class="text-xs font-bold text-emerald-400 shrink-0 ml-2">Lolos Otomatis <i class="fa-solid fa-forward ml-1"></i></span>
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    return `
+                        <div class="p-4 rounded-xl bg-slate-950/90 border border-slate-800 hover:border-emerald-500/40 transition">
+                            <div class="flex items-center justify-between text-[11px] font-bold uppercase mb-2.5">
+                                <span class="text-emerald-400"><i class="fa-solid fa-futbol mr-1"></i> Match ${idx + 1}</span>
+                                <span class="text-slate-500">${m.isTwoLeg ? '2 Leg (Home & Away)' : 'Single Match'}</span>
+                            </div>
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between bg-slate-900 px-3 py-2 rounded-lg border border-slate-800">
+                                    <span class="font-bold text-sm text-white truncate">${escapeHtml(m.p1)}</span>
+                                    <span class="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 text-[10px] font-extrabold shrink-0 ml-2">${m.isTwoLeg ? 'LEG 1 HOME' : 'HOME'}</span>
+                                </div>
+                                <div class="flex items-center justify-center">
+                                    <span class="px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 font-sport text-xs font-extrabold tracking-widest">VS</span>
+                                </div>
+                                <div class="flex items-center justify-between bg-slate-900 px-3 py-2 rounded-lg border border-slate-800">
+                                    <span class="font-bold text-sm text-white truncate">${escapeHtml(m.p2)}</span>
+                                    <span class="px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-400 text-[10px] font-extrabold shrink-0 ml-2">${m.isTwoLeg ? 'LEG 2 HOME' : 'AWAY'}</span>
+                                </div>
+                            </div>
+                            ${m.isTwoLeg ? `
+                                <div class="mt-2.5 pt-2 border-t border-slate-800/80 text-[11px] text-amber-300/90">
+                                    <i class="fa-solid fa-rotate mr-1"></i> Leg 2: <strong>${escapeHtml(m.p2)}</strong> (Home) vs <strong>${escapeHtml(m.p1)}</strong> (Away)
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            function getStageHeading(rIdx, totalRounds) {
+                const rem = totalRounds - rIdx;
+                if (rem === 1) return 'Grand Final';
+                if (rem === 2) return 'Semifinal';
+                if (rem === 3) return 'Perempat Final';
+                return `Babak ${rIdx + 1}`;
+            }
+
+            function renderCupBracket() {
+                const container = $('bracket-tree-container');
+                const totalRounds = appState.bracketRounds.length;
+
+                $('bracket-helper-text').textContent = appState.legSystem === 'homeaway'
+                    ? 'Isi skor Leg 1 & Leg 2 untuk hitung agregat otomatis, atau klik langsung nama pemenang (jika seri / adu penalti).'
+                    : 'Klik nama pemain yang menang pada setiap pertandingan untuk meloloskannya hingga Grand Final.';
+
+                container.innerHTML = appState.bracketRounds.map((roundMatches, rIdx) => {
+                    const isFinal = rIdx === totalRounds - 1;
+                    const heading = getStageHeading(rIdx, totalRounds);
+
+                    const cards = roundMatches.map((m, mIdx) => {
+                        const p1Ready = m.p1 && m.p1 !== 'BYE';
+                        const p2Ready = m.p2 && m.p2 !== 'BYE';
+                        const playable = p1Ready && p2Ready;
+
+                        const p1Win = m.winner && m.winner === m.p1;
+                        const p2Win = m.winner && m.winner === m.p2;
+
+                        // Hitung Agregat jika 2 Leg
+                        let agg1 = null;
+                        let agg2 = null;
+                        let allFilled = false;
+                        let isDraw = false;
+
+                        if (m.isTwoLeg && playable) {
+                            const a = String(m.leg1P1).trim();
+                            const b = String(m.leg1P2).trim();
+                            const c = String(m.leg2P1).trim();
+                            const d = String(m.leg2P2).trim();
+                            if (a !== '' && b !== '' && c !== '' && d !== '') {
+                                allFilled = true;
+                                agg1 = (parseInt(a, 10) || 0) + (parseInt(c, 10) || 0);
+                                agg2 = (parseInt(b, 10) || 0) + (parseInt(d, 10) || 0);
+                                isDraw = agg1 === agg2;
+                            }
+                        }
+
+                        const p1Style = p1Win
+                            ? 'bg-emerald-500/25 border-emerald-400 text-white font-bold'
+                            : (playable ? 'bg-slate-900 hover:bg-emerald-500/15 border-slate-700 hover:border-emerald-400 text-slate-200 cursor-pointer' : 'bg-slate-950/70 border-slate-800 text-slate-400');
+
+                        const p2Style = p2Win
+                            ? 'bg-emerald-500/25 border-emerald-400 text-white font-bold'
+                            : (playable ? 'bg-slate-900 hover:bg-emerald-500/15 border-slate-700 hover:border-emerald-400 text-slate-200 cursor-pointer' : 'bg-slate-950/70 border-slate-800 text-slate-400');
+
+                        const twoLegBox = (m.isTwoLeg && playable) ? `
+                            <div class="mt-2 pt-2 border-t border-slate-800 space-y-1.5 text-[11px]">
+                                <div class="flex items-center justify-between gap-1 text-slate-400">
+                                    <span class="truncate max-w-[125px]"><strong class="text-emerald-400">L1:</strong> ${escapeHtml(m.p1)} (H)</span>
+                                    <div class="flex items-center gap-1 shrink-0">
+                                        <input type="number" min="0" max="99" placeholder="-" value="${escapeHtml(m.leg1P1)}"
+                                            data-r="${rIdx}" data-m="${mIdx}" data-field="leg1P1"
+                                            class="cup-leg-input w-8 h-6 bg-slate-900 border border-slate-700 focus:border-emerald-400 rounded text-center font-bold text-white focus:outline-none">
+                                        <span>:</span>
+                                        <input type="number" min="0" max="99" placeholder="-" value="${escapeHtml(m.leg1P2)}"
+                                            data-r="${rIdx}" data-m="${mIdx}" data-field="leg1P2"
+                                            class="cup-leg-input w-8 h-6 bg-slate-900 border border-slate-700 focus:border-emerald-400 rounded text-center font-bold text-white focus:outline-none">
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between gap-1 text-slate-400">
+                                    <span class="truncate max-w-[125px]"><strong class="text-sky-400">L2:</strong> ${escapeHtml(m.p2)} (H)</span>
+                                    <div class="flex items-center gap-1 shrink-0">
+                                        <input type="number" min="0" max="99" placeholder="-" value="${escapeHtml(m.leg2P2)}"
+                                            data-r="${rIdx}" data-m="${mIdx}" data-field="leg2P2"
+                                            class="cup-leg-input w-8 h-6 bg-slate-900 border border-slate-700 focus:border-emerald-400 rounded text-center font-bold text-white focus:outline-none">
+                                        <span>:</span>
+                                        <input type="number" min="0" max="99" placeholder="-" value="${escapeHtml(m.leg2P1)}"
+                                            data-r="${rIdx}" data-m="${mIdx}" data-field="leg2P1"
+                                            class="cup-leg-input w-8 h-6 bg-slate-900 border border-slate-700 focus:border-emerald-400 rounded text-center font-bold text-white focus:outline-none">
+                                    </div>
+                                </div>
+                                ${allFilled ? `
+                                    <div class="flex items-center justify-between px-2 py-1 rounded bg-slate-900 border border-slate-800 text-[10px]">
+                                        <span class="text-slate-400 font-bold uppercase">Agregat:</span>
+                                        <span class="font-bold ${isDraw ? 'text-amber-400' : 'text-emerald-400'}">
+                                            ${agg1} - ${agg2} ${isDraw ? '(Seri - Klik Pemenang Penalti)' : ''}
+                                        </span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        ` : '';
+
+                        return `
+                            <div class="w-64 sm:w-72 rounded-xl bg-slate-950/95 border ${isFinal ? 'border-amber-400/60' : 'border-slate-800'} p-3 flex flex-col justify-center">
+                                <div class="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">
+                                    <span>${isFinal ? 'Grand Final' : `Match ${mIdx + 1}`} ${m.isTwoLeg ? '• 2 Leg' : ''}</span>
+                                    ${m.isBye ? '<span class="text-amber-400">BYE</span>' : (playable ? '<span class="text-emerald-400">Klik Pemenang</span>' : '')}
+                                </div>
+
+                                <div data-r="${rIdx}" data-m="${mIdx}" data-slot="1"
+                                    class="bracket-slot-btn flex items-center justify-between px-3 py-2 rounded-lg border text-xs sm:text-sm transition mb-1.5 ${p1Style}">
+                                    <span class="truncate pr-2">${m.p1 ? escapeHtml(m.p1) : '<span class="italic text-slate-600">Menunggu...</span>'}</span>
+                                    <div class="flex items-center gap-1.5 shrink-0">
+                                        ${agg1 !== null ? `<span class="px-1.5 py-0.5 rounded bg-slate-950 text-[11px] font-bold text-amber-300 border border-slate-700">${agg1}</span>` : ''}
+                                        ${p1Win ? '<i class="fa-solid fa-circle-check text-emerald-400"></i>' : ''}
+                                    </div>
+                                </div>
+
+                                <div data-r="${rIdx}" data-m="${mIdx}" data-slot="2"
+                                    class="bracket-slot-btn flex items-center justify-between px-3 py-2 rounded-lg border text-xs sm:text-sm transition ${p2Style}">
+                                    <span class="truncate pr-2">
+                                        ${m.p2 === 'BYE'
+                                            ? '<span class="italic text-amber-400/80 font-semibold">— BYE (Lolos) —</span>'
+                                            : (m.p2 ? escapeHtml(m.p2) : '<span class="italic text-slate-600">Menunggu...</span>')}
+                                    </span>
+                                    <div class="flex items-center gap-1.5 shrink-0">
+                                        ${agg2 !== null ? `<span class="px-1.5 py-0.5 rounded bg-slate-950 text-[11px] font-bold text-amber-300 border border-slate-700">${agg2}</span>` : ''}
+                                        ${p2Win ? '<i class="fa-solid fa-circle-check text-emerald-400"></i>' : ''}
+                                    </div>
+                                </div>
+
+                                ${twoLegBox}
+                            </div>
+                        `;
+                    }).join('');
+
+                    return `
+                        <div class="flex flex-col">
+                            <div class="text-center mb-3 py-1.5 px-3 rounded-lg ${isFinal ? 'bg-amber-500/20 border border-amber-400/40 text-amber-300' : 'bg-slate-900 border border-slate-800 text-emerald-400'} font-sport text-base font-bold tracking-wider uppercase">
+                                ${heading}
+                            </div>
+                            <div class="flex-1 flex flex-col justify-around gap-4">
+                                ${cards}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // =========================================================
+            // MODE LIGA: ROUND-ROBIN & KLASEMEN LANGSUNG
+            // =========================================================
+            function buildLeagueData() {
+                const list = [...appState.shuffledPlayers];
+                if (list.length % 2 !== 0) {
+                    list.push('__REST__');
+                }
+
+                const n = list.length;
+                const roundsCount = n - 1;
+                const half = n / 2;
+                const rot = [...list];
+                const firstLegWeeks = [];
+
+                for (let r = 0; r < roundsCount; r++) {
+                    const matches = [];
+                    let restPlayer = null;
+
+                    for (let i = 0; i < half; i++) {
+                        const a = rot[i];
+                        const b = rot[n - 1 - i];
+                        if (a === '__REST__') {
+                            restPlayer = b;
+                        } else if (b === '__REST__') {
+                            restPlayer = a;
+                        } else {
+                            const home = (r % 2 === 1 && i === 0) ? b : a;
+                            const away = (r % 2 === 1 && i === 0) ? a : b;
+                            matches.push({ home, away, homeScore: '', awayScore: '' });
+                        }
+                    }
+
+                    firstLegWeeks.push({ week: r + 1, matches, restPlayer });
+
+                    const fixed = rot[0];
+                    const tail = rot.slice(1);
+                    tail.unshift(tail.pop());
+                    rot.splice(0, rot.length, fixed, ...tail);
+                }
+
+                if (appState.legSystem === 'homeaway') {
+                    const secondLegWeeks = firstLegWeeks.map((md, idx) => ({
+                        week: roundsCount + idx + 1,
+                        restPlayer: md.restPlayer,
+                        matches: md.matches.map((m) => ({
+                            home: m.away,
+                            away: m.home,
+                            homeScore: '',
+                            awayScore: ''
+                        }))
+                    }));
+                    appState.leagueMatchdays = [...firstLegWeeks, ...secondLegWeeks];
+                } else {
+                    appState.leagueMatchdays = firstLegWeeks;
+                }
+            }
+
+            function computeLeagueStandings() {
+                const table = {};
+                appState.shuffledPlayers.forEach((p) => {
+                    table[p] = { name: p, played: 0, won: 0, drawn: 0, lost: 0, gf: 0, ga: 0, gd: 0, pts: 0 };
+                });
+
+                appState.leagueMatchdays.forEach((md) => {
+                    md.matches.forEach((m) => {
+                        const hs = String(m.homeScore).trim();
+                        const as = String(m.awayScore).trim();
+                        if (hs !== '' && as !== '') {
+                            const gHome = parseInt(hs, 10) || 0;
+                            const gAway = parseInt(as, 10) || 0;
+                            const homeRow = table[m.home];
+                            const awayRow = table[m.away];
+
+                            if (homeRow && awayRow) {
+                                homeRow.played++;
+                                awayRow.played++;
+                                homeRow.gf += gHome;
+                                homeRow.ga += gAway;
+                                awayRow.gf += gAway;
+                                awayRow.ga += gHome;
+
+                                if (gHome > gAway) {
+                                    homeRow.won++;
+                                    homeRow.pts += 3;
+                                    awayRow.lost++;
+                                } else if (gHome < gAway) {
+                                    awayRow.won++;
+                                    awayRow.pts += 3;
+                                    homeRow.lost++;
+                                } else {
+                                    homeRow.drawn++;
+                                    awayRow.drawn++;
+                                    homeRow.pts += 1;
+                                    awayRow.pts += 1;
+                                }
+                            }
+                        }
+                    });
+                });
+
+                const rows = Object.values(table).map((r) => {
+                    r.gd = r.gf - r.ga;
+                    return r;
+                });
+
+                rows.sort((a, b) => {
+                    if (b.pts !== a.pts) return b.pts - a.pts;
+                    if (b.gd !== a.gd) return b.gd - a.gd;
+                    if (b.gf !== a.gf) return b.gf - a.gf;
+                    return a.name.localeCompare(b.name);
+                });
+
+                return rows;
+            }
+
+            function renderLeagueStandings() {
+                const standings = computeLeagueStandings();
+                $('league-standings-body').innerHTML = standings.map((row, idx) => {
+                    const posBadge = idx === 0
+                        ? 'bg-amber-400 text-slate-950 font-extrabold'
+                        : (idx < 3 ? 'bg-emerald-500/20 text-emerald-300 font-bold' : 'bg-slate-900 text-slate-400');
+
+                    return `
+                        <tr class="hover:bg-slate-900/60 transition">
+                            <td class="py-2.5 px-3 text-center">
+                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-md text-xs ${posBadge}">${idx + 1}</span>
+                            </td>
+                            <td class="py-2.5 px-3 font-bold text-white">${escapeHtml(row.name)}</td>
+                            <td class="py-2.5 px-2.5 text-center text-slate-300">${row.played}</td>
+                            <td class="py-2.5 px-2.5 text-center text-emerald-400 font-semibold">${row.won}</td>
+                            <td class="py-2.5 px-2.5 text-center text-amber-400 font-semibold">${row.drawn}</td>
+                            <td class="py-2.5 px-2.5 text-center text-rose-400 font-semibold">${row.lost}</td>
+                            <td class="py-2.5 px-2.5 text-center text-slate-300">${row.gf}</td>
+                            <td class="py-2.5 px-2.5 text-center text-slate-300">${row.ga}</td>
+                            <td class="py-2.5 px-2.5 text-center font-semibold ${row.gd > 0 ? 'text-emerald-400' : (row.gd < 0 ? 'text-rose-400' : 'text-slate-400')}">
+                                ${row.gd > 0 ? '+' + row.gd : row.gd}
+                            </td>
+                            <td class="py-2.5 px-3 text-center font-extrabold text-base text-white">${row.pts}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            function renderLeagueMatchdays() {
+                $('league-weeks-badge').textContent = `${appState.leagueMatchdays.length} Pekan`;
+                $('league-matchdays-grid').innerHTML = appState.leagueMatchdays.map((md, wIdx) => {
+                    const matchesHtml = md.matches.map((m, mIdx) => `
+                        <div class="flex items-center justify-between gap-2 bg-slate-900/90 px-3 py-2 rounded-xl border border-slate-800">
+                            <span class="text-xs sm:text-sm font-semibold text-white truncate flex-1 text-right">${escapeHtml(m.home)}</span>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <input type="number" min="0" max="99" placeholder="-" value="${escapeHtml(m.homeScore)}"
+                                    data-w="${wIdx}" data-m="${mIdx}" data-side="home"
+                                    class="league-score-input w-9 h-8 bg-slate-950 border border-slate-700 focus:border-emerald-400 rounded-lg text-center font-bold text-sm text-white focus:outline-none">
+                                <span class="text-slate-500 font-bold text-xs">:</span>
+                                <input type="number" min="0" max="99" placeholder="-" value="${escapeHtml(m.awayScore)}"
+                                    data-w="${wIdx}" data-m="${mIdx}" data-side="away"
+                                    class="league-score-input w-9 h-8 bg-slate-950 border border-slate-700 focus:border-emerald-400 rounded-lg text-center font-bold text-sm text-white focus:outline-none">
+                            </div>
+                            <span class="text-xs sm:text-sm font-semibold text-white truncate flex-1 text-left">${escapeHtml(m.away)}</span>
+                        </div>
+                    `).join('');
+
+                    return `
+                        <div class="p-4 rounded-xl bg-slate-950/90 border border-slate-800">
+                            <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-800/80">
+                                <span class="font-sport text-lg font-bold uppercase text-emerald-400 tracking-wide">Pekan ${md.week} (Matchday ${md.week})</span>
+                                ${md.restPlayer ? `<span class="text-[11px] text-amber-300/90"><i class="fa-solid fa-mug-hot mr-1"></i>Istirahat: ${escapeHtml(md.restPlayer)}</span>` : ''}
+                            </div>
+                            <div class="space-y-2">
+                                ${matchesHtml}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // =========================================================
+            // RENDER UTAMA TAHAP 3 & SHARE WHATSAPP
+            // =========================================================
+            function renderStep3View() {
+                $('res-tournament-title').textContent = appState.tournamentName;
+
+                if (appState.mode === 'cup') {
+                    $('cup-view-wrapper').classList.remove('hidden');
+                    $('league-view-wrapper').classList.add('hidden');
+                    $('champion-banner').classList.add('hidden');
+
+                    const legLabel = appState.legSystem === 'homeaway' ? 'Home & Away (2 Leg)' : 'Single Match';
+                    const byes = appState.bracketSize - appState.shuffledPlayers.length;
+                    $('res-mode-badge').textContent = 'MODE CUP (KNOCKOUT)';
+                    $('res-leg-badge').textContent = legLabel;
+                    $('res-subtitle').textContent = `${appState.shuffledPlayers.length} Pemain • Babak ${getCupRoundTitle(appState.bracketSize)}${byes > 0 ? ` • ${byes} Slot BYE` : ''}`;
+
+                    renderCupScheduleTab();
+                    renderCupBracket();
+                } else {
+                    $('cup-view-wrapper').classList.add('hidden');
+                    $('league-view-wrapper').classList.remove('hidden');
+
+                    const legLabel = appState.legSystem === 'homeaway' ? 'Home & Away (2 Putaran)' : '1 Putaran (Round-Robin)';
+                    $('res-mode-badge').textContent = 'MODE LIGA (KLASEMEN)';
+                    $('res-leg-badge').textContent = legLabel;
+                    $('res-subtitle').textContent = `${appState.shuffledPlayers.length} Pemain • ${appState.leagueMatchdays.length} Pekan Pertandingan`;
+
+                    renderLeagueStandings();
+                    renderLeagueMatchdays();
+                }
+            }
+
+            function buildShareableText() {
+                const lines = [];
+                lines.push(`🏆 *HASIL UNDIAN ${appState.tournamentName.toUpperCase()}* ⚽`);
+
+                if (appState.mode === 'cup') {
+                    const legText = appState.legSystem === 'homeaway' ? 'CUP (Home & Away 2 Leg)' : 'CUP (Single Match)';
+                    lines.push(`Format: ${legText} | ${appState.shuffledPlayers.length} Pemain`);
+                    lines.push(`━━━━━━━━━━━━━━━━━━━━`);
+                    lines.push(`\n📋 *URUTAN HASIL KOCOKAN:*`);
+                    appState.shuffledPlayers.forEach((p, idx) => {
+                        lines.push(`${idx + 1}. ${p}`);
+                    });
+
+                    lines.push(`\n⚔️ *JADWAL PERTANDINGAN (BABAK 1):*`);
+                    const round0 = appState.bracketRounds[0] || [];
+                    round0.forEach((m, idx) => {
+                        if (m.isBye) {
+                            lines.push(`• *Match ${idx + 1}:* ${m.p1} ➡️ _LOLOS OTOMATIS (BYE)_`);
+                        } else if (m.isTwoLeg) {
+                            lines.push(`• *Match ${idx + 1} (2 Leg):*`);
+                            lines.push(`  - Leg 1: ${m.p1} (Home) 🆚 ${m.p2} (Away)`);
+                            lines.push(`  - Leg 2: ${m.p2} (Home) 🆚 ${m.p1} (Away)`);
+                        } else {
+                            lines.push(`• *Match ${idx + 1}:* ${m.p1} 🆚 ${m.p2}`);
+                        }
+                    });
+                } else {
+                    const legText = appState.legSystem === 'homeaway' ? 'LIGA (Home & Away 2 Putaran)' : 'LIGA (1 Putaran)';
+                    lines.push(`Format: ${legText} | ${appState.shuffledPlayers.length} Pemain`);
+                    lines.push(`━━━━━━━━━━━━━━━━━━━━`);
+                    lines.push(`\n📊 *KLASEMEN SEMENTARA:*`);
+                    const standings = computeLeagueStandings();
+                    standings.forEach((s, idx) => {
+                        lines.push(`${idx + 1}. ${s.name} — *${s.pts} Poin* (Main: ${s.played}, SG: ${s.gd > 0 ? '+' + s.gd : s.gd})`);
+                    });
+
+                    lines.push(`\n📅 *JADWAL PERTANDINGAN:*`);
+                    appState.leagueMatchdays.forEach((md) => {
+                        lines.push(`\n*Pekan ${md.week}:*`);
+                        md.matches.forEach((m) => {
+                            const hasScore = String(m.homeScore).trim() !== '' && String(m.awayScore).trim() !== '';
+                            const scoreStr = hasScore ? `*${m.homeScore} - ${m.awayScore}*` : '🆚';
+                            lines.push(`• ${m.home} ${scoreStr} ${m.away}`);
+                        });
+                    });
+                }
+
+                lines.push(`\n_Dibuat dengan PES CUP & LIGA Manager (Roby EV)_`);
+                return lines.join('\n');
+            }
+
+            function copyTextToClipboard() {
+                const text = buildShareableText();
+                const tempArea = document.createElement('textarea');
+                tempArea.value = text;
+                tempArea.style.position = 'fixed';
+                tempArea.style.opacity = '0';
+                document.body.appendChild(tempArea);
+                tempArea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast('Teks hasil undian berhasil disalin ke clipboard!');
+                } catch (err) {
+                    showToast('Gagal menyalin teks.', 'warning');
+                }
+                document.body.removeChild(tempArea);
+            }
+
+            function shareToWhatsApp() {
+                const text = buildShareableText();
+                const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+                window.open(waUrl, '_blank', 'noopener,noreferrer');
+            }
+
+            // =========================================================
+            // EVENT LISTENERS INITIALIZATION
+            // =========================================================
+            document.addEventListener('DOMContentLoaded', () => {
+                // Stepper Navigation
+                document.querySelectorAll('.step-nav-btn').forEach((btn) => {
+                    btn.addEventListener('click', () => {
+                        const target = parseInt(btn.getAttribute('data-step'), 10);
+                        navigateToStep(target);
+                    });
+                });
+
+                // Step 1 Controls
+                $('btn-mode-cup').addEventListener('click', () => setMode('cup'));
+                $('btn-mode-league').addEventListener('click', () => setMode('league'));
+                $('btn-leg-single').addEventListener('click', () => setLegSystem('single'));
+                $('btn-leg-homeaway').addEventListener('click', () => setLegSystem('homeaway'));
+
+                $('btn-dec-count').addEventListener('click', () => validateAndSyncCount(appState.playerCount - 1));
+                $('btn-inc-count').addEventListener('click', () => validateAndSyncCount(appState.playerCount + 1));
+                $('input-player-count').addEventListener('change', (e) => validateAndSyncCount(e.target.value));
+
+                document.querySelectorAll('.preset-btn').forEach((btn) => {
+                    btn.addEventListener('click', () => {
+                        validateAndSyncCount(btn.getAttribute('data-preset'));
+                    });
+                });
+
+                $('btn-to-step-2').addEventListener('click', () => navigateToStep(2));
+
+                // Step 2 Controls
+                $('btn-fill-sample').addEventListener('click', fillSamplePlayers);
+                $('btn-shuffle-inputs').addEventListener('click', shuffleInputOrder);
+                $('btn-back-step-1').addEventListener('click', () => navigateToStep(1));
+                $('btn-start-draw').addEventListener('click', runDrawAnimationAndBuild);
+
+                // Bulk Paste Modal Controls
+                $('btn-open-bulk').addEventListener('click', () => {
+                    $('bulk-paste-textarea').value = '';
+                    $('bulk-detected-count').textContent = '0 nama terdeteksi';
+                    $('modal-bulk-paste').classList.remove('hidden');
+                });
+                const closeBulkModal = () => $('modal-bulk-paste').classList.add('hidden');
+                $('btn-close-bulk').addEventListener('click', closeBulkModal);
+                $('btn-cancel-bulk').addEventListener('click', closeBulkModal);
+
+                $('bulk-paste-textarea').addEventListener('input', (e) => {
+                    const lines = e.target.value.split('\n').map((s) => s.trim()).filter(Boolean);
+                    $('bulk-detected-count').textContent = `${lines.length} nama terdeteksi`;
+                });
+
+                $('btn-apply-bulk').addEventListener('click', () => {
+                    const lines = $('bulk-paste-textarea').value.split('\n').map((s) => s.trim()).filter(Boolean);
+                    if (lines.length === 0) {
+                        showToast('Masukkan minimal 1 baris nama terlebih dahulu.', 'warning');
+                        return;
+                    }
+                    const fields = Array.from(document.querySelectorAll('.player-name-field'));
+                    fields.forEach((input, idx) => {
+                        if (lines[idx]) input.value = lines[idx];
+                    });
+                    appState.players = collectPlayerNames();
+                    closeBulkModal();
+                    showToast(`${Math.min(lines.length, fields.length)} nama berhasil diterapkan!`);
+                });
+
+                // Step 3 Top Actions
+                $('btn-reshuffle').addEventListener('click', runDrawAnimationAndBuild);
+                $('btn-edit-setup').addEventListener('click', () => navigateToStep(1));
+                $('btn-copy-text').addEventListener('click', copyTextToClipboard);
+                $('btn-share-wa').addEventListener('click', shareToWhatsApp);
+
+                // Step 3 CUP Tabs
+                $('tab-cup-schedule').addEventListener('click', () => {
+                    $('tab-cup-schedule').className = 'px-4 py-2 rounded-lg text-xs sm:text-sm font-bold bg-emerald-500 text-slate-950 shadow transition flex items-center gap-2 cursor-pointer';
+                    $('tab-cup-bracket').className = 'px-4 py-2 rounded-lg text-xs sm:text-sm font-bold text-slate-400 hover:text-white transition flex items-center gap-2 cursor-pointer';
+                    $('cup-panel-schedule').classList.remove('hidden');
+                    $('cup-panel-bracket').classList.add('hidden');
+                });
+
+                $('tab-cup-bracket').addEventListener('click', () => {
+                    $('tab-cup-bracket').className = 'px-4 py-2 rounded-lg text-xs sm:text-sm font-bold bg-emerald-500 text-slate-950 shadow transition flex items-center gap-2 cursor-pointer';
+                    $('tab-cup-schedule').className = 'px-4 py-2 rounded-lg text-xs sm:text-sm font-bold text-slate-400 hover:text-white transition flex items-center gap-2 cursor-pointer';
+                    $('cup-panel-bracket').classList.remove('hidden');
+                    $('cup-panel-schedule').classList.add('hidden');
+                });
+
+                $('btn-reset-bracket').addEventListener('click', () => {
+                    buildCupBracketData();
+                    $('champion-banner').classList.add('hidden');
+                    renderCupBracket();
+                    showToast('Skor dan progres bagan telah direset.');
+                });
+
+                // Event Delegation untuk Bagan Interaktif (Klik Pemenang & Input Skor 2 Leg)
+                $('bracket-tree-container').addEventListener('click', (e) => {
+                    const slotBtn = e.target.closest('.bracket-slot-btn');
+                    if (!slotBtn) return;
+
+                    const rIdx = parseInt(slotBtn.getAttribute('data-r'), 10);
+                    const mIdx = parseInt(slotBtn.getAttribute('data-m'), 10);
+                    const slotNum = parseInt(slotBtn.getAttribute('data-slot'), 10);
+                    const match = appState.bracketRounds[rIdx]?.[mIdx];
+                    if (!match || match.isBye) return;
+
+                    if (!match.p1 || !match.p2 || match.p1 === 'BYE' || match.p2 === 'BYE') {
+                        showToast('Menunggu lawan dari babak sebelumnya.', 'warning');
+                        return;
+                    }
+
+                    const chosen = slotNum === 1 ? match.p1 : match.p2;
+                    setCupMatchWinner(rIdx, mIdx, chosen);
+                });
+
+                $('bracket-tree-container').addEventListener('input', (e) => {
+                    const inp = e.target.closest('.cup-leg-input');
+                    if (!inp) return;
+
+                    const rIdx = parseInt(inp.getAttribute('data-r'), 10);
+                    const mIdx = parseInt(inp.getAttribute('data-m'), 10);
+                    const field = inp.getAttribute('data-field');
+                    const match = appState.bracketRounds[rIdx]?.[mIdx];
+                    if (!match) return;
+
+                    match[field] = inp.value;
+
+                    const a = String(match.leg1P1).trim();
+                    const b = String(match.leg1P2).trim();
+                    const c = String(match.leg2P1).trim();
+                    const d = String(match.leg2P2).trim();
+
+                    if (a !== '' && b !== '' && c !== '' && d !== '') {
+                        const agg1 = (parseInt(a, 10) || 0) + (parseInt(c, 10) || 0);
+                        const agg2 = (parseInt(b, 10) || 0) + (parseInt(d, 10) || 0);
+                        if (agg1 > agg2) {
+                            setCupMatchWinner(rIdx, mIdx, match.p1);
+                            return;
+                        } else if (agg2 > agg1) {
+                            setCupMatchWinner(rIdx, mIdx, match.p2);
+                            return;
+                        }
+                    }
+
+                    // Perbarui badge agregat tanpa menghilangkan fokus input
+                    const activeTag = inp.getAttribute('data-field');
+                    renderCupBracket();
+                    const restored = $('bracket-tree-container').querySelector(
+                        `.cup-leg-input[data-r="${rIdx}"][data-m="${mIdx}"][data-field="${activeTag}"]`
+                    );
+                    if (restored) {
+                        restored.focus();
+                        const len = restored.value.length;
+                        restored.setSelectionRange(len, len);
+                    }
+                });
+
+                // Event Delegation untuk Input Skor Mode LIGA
+                $('league-matchdays-grid').addEventListener('input', (e) => {
+                    const inp = e.target.closest('.league-score-input');
+                    if (!inp) return;
+
+                    const wIdx = parseInt(inp.getAttribute('data-w'), 10);
+                    const mIdx = parseInt(inp.getAttribute('data-m'), 10);
+                    const side = inp.getAttribute('data-side');
+                    const match = appState.leagueMatchdays[wIdx]?.matches[mIdx];
+                    if (!match) return;
+
+                    if (side === 'home') {
+                        match.homeScore = inp.value;
+                    } else {
+                        match.awayScore = inp.value;
+                    }
+
+                    renderLeagueStandings();
+                });
+
+                $('btn-reset-league-scores').addEventListener('click', () => {
+                    appState.leagueMatchdays.forEach((md) => {
+                        md.matches.forEach((m) => {
+                            m.homeScore = '';
+                            m.awayScore = '';
+                        });
+                    });
+                    renderLeagueStandings();
+                    renderLeagueMatchdays();
+                    showToast('Semua skor liga telah direset.');
+                });
+
+                // Inisialisasi Awal
+                setMode('cup');
+                setLegSystem('single');
+                validateAndSyncCount(8);
+            });
+        })();
+    </script>
+</body>
+</html>

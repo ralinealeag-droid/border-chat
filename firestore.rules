@@ -1,0 +1,330 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global safety net: deny everything by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isValidPrivateUser(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 60 &&
+             (!('email' in data) || data.email == null || (data.email is string && data.email.size() <= 120)) &&
+             (!('photoUrl' in data) || data.photoUrl == null || (data.photoUrl is string && data.photoUrl.size() <= 500)) &&
+             (!('readReceiptsEnabled' in data) || data.readReceiptsEnabled is bool) &&
+             (!('groupReadReceiptsEnabled' in data) || data.groupReadReceiptsEnabled is bool) &&
+             (!('chatReadReceiptOverrides' in data) || (data.chatReadReceiptOverrides is map && data.chatReadReceiptOverrides.size() <= 200)) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidPublicProfile(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 60 &&
+             (!('photoUrl' in data) || data.photoUrl == null || (data.photoUrl is string && data.photoUrl.size() <= 500)) &&
+             data.statusText is string && data.statusText.size() <= 140 &&
+             data.publicKey is string && data.publicKey.size() >= 16 && data.publicKey.size() <= 512 &&
+             data.online is bool &&
+             data.discoverable is bool &&
+             data.lastSeen is timestamp && data.lastSeen <= request.time &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidChat(data) {
+      return data.type in ['DIRECT', 'GROUP'] &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 80 &&
+             data.memberUids is list && data.memberUids.size() >= 1 && data.memberUids.size() <= 50 &&
+             data.memberUids[0] is string &&
+             data.adminUids is list && data.adminUids.size() >= 1 && data.adminUids.size() <= 50 &&
+             data.adminUids[0] is string &&
+             data.memberNames is map && data.memberNames.size() <= 50 &&
+             data.encryptedKeys is map && data.encryptedKeys.size() <= 50 &&
+             data.lastMessagePreview is string && data.lastMessagePreview.size() <= 200 &&
+             (!('lastSenderId' in data) || data.lastSenderId == null || (data.lastSenderId is string && data.lastSenderId.size() <= 128)) &&
+             (!('lastMessageId' in data) || data.lastMessageId == null || (data.lastMessageId is string && data.lastMessageId.size() <= 128)) &&
+             (!('lastMessageReadByUids' in data) || (data.lastMessageReadByUids is list && data.lastMessageReadByUids.size() <= 50 && (data.lastMessageReadByUids.size() == 0 || data.lastMessageReadByUids[0] is string))) &&
+             data.createdBy is string && data.createdBy.size() >= 1 && data.createdBy.size() <= 128 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidMessage(data, chatId) {
+      return data.chatId == chatId &&
+             data.senderId is string && data.senderId.size() >= 1 && data.senderId.size() <= 128 &&
+             data.senderName is string && data.senderName.size() >= 1 && data.senderName.size() <= 60 &&
+             data.memberUids is list && data.memberUids.size() >= 1 && data.memberUids.size() <= 50 &&
+             data.memberUids[0] is string &&
+             data.messageType in ['TEXT', 'IMAGE', 'VIDEO', 'LOCATION', 'LIVE_LOCATION', 'CALL_LOG', 'DELETED'] &&
+             data.encryptedContent is string && data.encryptedContent.size() <= 650000 &&
+             data.iv is string && data.iv.size() <= 64 &&
+             data.encryptionVersion is string && data.encryptionVersion.size() >= 1 && data.encryptionVersion.size() <= 32 &&
+             (!('encryptedThumb' in data) || data.encryptedThumb == null || (data.encryptedThumb is string && data.encryptedThumb.size() <= 150000)) &&
+             (!('thumbIv' in data) || data.thumbIv == null || (data.thumbIv is string && data.thumbIv.size() <= 64)) &&
+             (!('readByUids' in data) || (data.readByUids is list && data.readByUids.size() <= 50 && (data.readByUids.size() == 0 || data.readByUids[0] is string))) &&
+             (!('readBy' in data) || (data.readBy is map && data.readBy.size() <= 50)) &&
+             data.edited is bool &&
+             data.deleted is bool &&
+             (!('editedAt' in data) || data.editedAt == null || (data.editedAt is timestamp && data.editedAt <= request.time)) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidLiveLocation(data, chatId) {
+      return data.chatId == chatId &&
+             data.sharerId is string && data.sharerId.size() >= 1 && data.sharerId.size() <= 128 &&
+             data.sharerName is string && data.sharerName.size() >= 1 && data.sharerName.size() <= 60 &&
+             data.memberUids is list && data.memberUids.size() >= 1 && data.memberUids.size() <= 50 &&
+             data.memberUids[0] is string &&
+             data.encryptedCoords is string && data.encryptedCoords.size() <= 4096 &&
+             data.iv is string && data.iv.size() <= 64 &&
+             data.active is bool &&
+             data.expiresAtEpochMs is int && data.expiresAtEpochMs >= 0 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidCall(data) {
+      return data.chatId is string && data.chatId.size() >= 1 && data.chatId.size() <= 128 &&
+             data.chatTitle is string && data.chatTitle.size() >= 1 && data.chatTitle.size() <= 80 &&
+             data.callerId is string && data.callerId.size() >= 1 && data.callerId.size() <= 128 &&
+             data.callerName is string && data.callerName.size() >= 1 && data.callerName.size() <= 60 &&
+             data.participantUids is list && data.participantUids.size() >= 1 && data.participantUids.size() <= 50 &&
+             data.participantUids[0] is string &&
+             data.callType in ['VOICE', 'VIDEO'] &&
+             data.status in ['RINGING', 'CONNECTED', 'ENDED', 'DECLINED'] &&
+             data.e2eeSafetyCode is string && data.e2eeSafetyCode.size() >= 4 && data.e2eeSafetyCode.size() <= 64 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    // 1. Private user PII profile & read receipt privacy settings (owner-only)
+    match /users/{userId} {
+      allow get, list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       incoming().userId == userId &&
+                       incoming().keys().hasAll(['userId', 'displayName', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'displayName', 'email', 'photoUrl', 'readReceiptsEnabled', 'groupReadReceiptsEnabled', 'chatReadReceiptOverrides', 'createdAt', 'updatedAt']) &&
+                       isValidPrivateUser(incoming());
+
+      allow update: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidPrivateUser(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'email', 'photoUrl', 'readReceiptsEnabled', 'groupReadReceiptsEnabled', 'chatReadReceiptOverrides', 'updatedAt']);
+
+      allow delete: if isOwner(userId) && isValidId(userId);
+    }
+
+    // 2. Discoverable public chat profiles (NO PII)
+    match /publicProfiles/{userId} {
+      allow get: if isSignedIn() && isValidId(userId);
+      allow list: if isSignedIn() && existing().discoverable == true;
+
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       incoming().userId == userId &&
+                       incoming().keys().hasAll(['userId', 'displayName', 'statusText', 'publicKey', 'online', 'discoverable', 'lastSeen', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'displayName', 'photoUrl', 'statusText', 'publicKey', 'online', 'discoverable', 'lastSeen', 'createdAt', 'updatedAt']) &&
+                       isValidPublicProfile(incoming());
+
+      allow update: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidPublicProfile(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoUrl', 'statusText', 'publicKey', 'online', 'discoverable', 'lastSeen', 'updatedAt']);
+
+      allow delete: if isOwner(userId) && isValidId(userId);
+    }
+
+    // 3. Direct & Group Chat Rooms
+    match /chats/{chatId} {
+      allow get: if isSignedIn() && isValidId(chatId) && request.auth.uid in existing().memberUids;
+      allow list: if isSignedIn() && request.auth.uid in existing().memberUids;
+
+      allow create: if isSignedIn() &&
+                       isValidId(chatId) &&
+                       incoming().createdBy == request.auth.uid &&
+                       request.auth.uid in incoming().memberUids &&
+                       request.auth.uid in incoming().adminUids &&
+                       incoming().keys().hasAll(['type', 'title', 'memberUids', 'adminUids', 'memberNames', 'encryptedKeys', 'lastMessagePreview', 'createdBy', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['type', 'title', 'memberUids', 'adminUids', 'memberNames', 'encryptedKeys', 'lastMessagePreview', 'lastSenderId', 'lastMessageId', 'lastMessageReadByUids', 'createdBy', 'createdAt', 'updatedAt']) &&
+                       isValidChat(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(chatId) &&
+                       request.auth.uid in existing().memberUids &&
+                       isValidChat(incoming()) &&
+                       incoming().createdBy == existing().createdBy &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().type == existing().type &&
+                       (
+                         incoming().diff(existing()).affectedKeys().hasOnly(['lastMessagePreview', 'lastSenderId', 'lastMessageId', 'lastMessageReadByUids', 'updatedAt', 'encryptedKeys', 'memberNames']) ||
+                         (request.auth.uid in existing().adminUids &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['title', 'memberUids', 'adminUids', 'memberNames', 'encryptedKeys', 'updatedAt'])) ||
+                         (incoming().diff(existing()).affectedKeys().hasOnly(['lastMessageReadByUids', 'updatedAt']) &&
+                          'lastMessageReadByUids' in incoming() &&
+                          request.auth.uid in incoming().lastMessageReadByUids &&
+                          (
+                            !('lastMessageReadByUids' in existing())
+                              ? incoming().lastMessageReadByUids.size() <= 2
+                              : (incoming().lastMessageReadByUids.hasAll(existing().lastMessageReadByUids) &&
+                                 incoming().lastMessageReadByUids.size() <= existing().lastMessageReadByUids.size() + 1)
+                          ))
+                       );
+
+      allow delete: if isSignedIn() && isValidId(chatId) && request.auth.uid in existing().adminUids;
+
+      // 4. E2EE Encrypted Messages (denormalized memberUids for fast flat list security)
+      match /messages/{messageId} {
+        allow get: if isSignedIn() && isValidId(chatId) && isValidId(messageId) && request.auth.uid in existing().memberUids;
+        allow list: if isSignedIn() && isValidId(chatId) && request.auth.uid in existing().memberUids;
+
+        allow create: if isSignedIn() &&
+                         isValidId(chatId) &&
+                         isValidId(messageId) &&
+                         incoming().senderId == request.auth.uid &&
+                         request.auth.uid in incoming().memberUids &&
+                         incoming().edited == false &&
+                         incoming().deleted == false &&
+                         incoming().keys().hasAll(['chatId', 'senderId', 'senderName', 'memberUids', 'messageType', 'encryptedContent', 'iv', 'encryptionVersion', 'edited', 'deleted', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['chatId', 'senderId', 'senderName', 'memberUids', 'messageType', 'encryptedContent', 'iv', 'encryptionVersion', 'encryptedThumb', 'thumbIv', 'readByUids', 'readBy', 'edited', 'deleted', 'editedAt', 'createdAt', 'updatedAt']) &&
+                         isValidMessage(incoming(), chatId) &&
+                         (!('readByUids' in incoming()) || incoming().readByUids == [request.auth.uid] || incoming().readByUids.size() == 0) &&
+                         (!('readBy' in incoming()) || incoming().readBy.size() == 0 || (incoming().readBy.keys().hasOnly([request.auth.uid]) && incoming().readBy[request.auth.uid] is timestamp && incoming().readBy[request.auth.uid] <= request.time)) &&
+                         exists(/databases/$(database)/documents/chats/$(chatId)) &&
+                         request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.memberUids;
+
+        allow update: if isSignedIn() &&
+                         isValidId(chatId) &&
+                         isValidId(messageId) &&
+                         request.auth.uid in existing().memberUids &&
+                         isValidMessage(incoming(), chatId) &&
+                         incoming().senderId == existing().senderId &&
+                         incoming().chatId == existing().chatId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().memberUids == existing().memberUids &&
+                         (
+                           (existing().senderId == request.auth.uid &&
+                            existing().deleted == false &&
+                            incoming().deleted == false &&
+                            incoming().edited == true &&
+                            incoming().diff(existing()).affectedKeys().hasOnly(['encryptedContent', 'iv', 'edited', 'editedAt', 'updatedAt'])) ||
+                           (existing().senderId == request.auth.uid &&
+                            incoming().deleted == true &&
+                            incoming().messageType == 'DELETED' &&
+                            incoming().diff(existing()).affectedKeys().hasOnly(['encryptedContent', 'iv', 'encryptedThumb', 'thumbIv', 'messageType', 'deleted', 'updatedAt'])) ||
+                           (existing().deleted == false &&
+                            incoming().diff(existing()).affectedKeys().hasOnly(['readByUids', 'readBy', 'updatedAt']) &&
+                            'readByUids' in incoming() &&
+                            request.auth.uid in incoming().readByUids &&
+                            (
+                              !('readByUids' in existing())
+                                ? incoming().readByUids.size() <= 2
+                                : (incoming().readByUids.hasAll(existing().readByUids) &&
+                                   incoming().readByUids.size() <= existing().readByUids.size() + 1)
+                            ) &&
+                            (
+                              !('readBy' in incoming()) ||
+                              (
+                                (
+                                  !('readBy' in existing())
+                                    ? incoming().readBy.keys().hasOnly([request.auth.uid])
+                                    : incoming().readBy.diff(existing().readBy).affectedKeys().hasOnly([request.auth.uid])
+                                ) &&
+                                incoming().readBy[request.auth.uid] is timestamp &&
+                                incoming().readBy[request.auth.uid] <= request.time
+                              )
+                            ))
+                         );
+
+        allow delete: if isSignedIn() && isValidId(chatId) && isValidId(messageId) && existing().senderId == request.auth.uid;
+      }
+
+      // 5. Realtime Encrypted Live Location Streams
+      match /liveLocations/{sharerId} {
+        allow get: if isSignedIn() && isValidId(chatId) && isValidId(sharerId) && request.auth.uid in existing().memberUids;
+        allow list: if isSignedIn() && isValidId(chatId) && request.auth.uid in existing().memberUids;
+
+        allow create: if isSignedIn() &&
+                         isValidId(chatId) &&
+                         isValidId(sharerId) &&
+                         sharerId == request.auth.uid &&
+                         incoming().sharerId == request.auth.uid &&
+                         request.auth.uid in incoming().memberUids &&
+                         incoming().keys().hasAll(['chatId', 'sharerId', 'sharerName', 'memberUids', 'encryptedCoords', 'iv', 'active', 'expiresAtEpochMs', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['chatId', 'sharerId', 'sharerName', 'memberUids', 'encryptedCoords', 'iv', 'active', 'expiresAtEpochMs', 'createdAt', 'updatedAt']) &&
+                         isValidLiveLocation(incoming(), chatId) &&
+                         exists(/databases/$(database)/documents/chats/$(chatId)) &&
+                         request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.memberUids;
+
+        allow update: if isSignedIn() &&
+                         isValidId(chatId) &&
+                         isValidId(sharerId) &&
+                         sharerId == request.auth.uid &&
+                         existing().sharerId == request.auth.uid &&
+                         isValidLiveLocation(incoming(), chatId) &&
+                         incoming().sharerId == existing().sharerId &&
+                         incoming().chatId == existing().chatId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['encryptedCoords', 'iv', 'active', 'expiresAtEpochMs', 'memberUids', 'sharerName', 'updatedAt']);
+
+        allow delete: if isSignedIn() && isValidId(chatId) && isValidId(sharerId) && sharerId == request.auth.uid;
+      }
+    }
+
+    // 6. Voice & Video Call Signaling
+    match /calls/{callId} {
+      allow get: if isSignedIn() && isValidId(callId) && request.auth.uid in existing().participantUids;
+      allow list: if isSignedIn() && request.auth.uid in existing().participantUids;
+
+      allow create: if isSignedIn() &&
+                       isValidId(callId) &&
+                       incoming().callerId == request.auth.uid &&
+                       request.auth.uid in incoming().participantUids &&
+                       incoming().status == 'RINGING' &&
+                       incoming().keys().hasAll(['chatId', 'chatTitle', 'callerId', 'callerName', 'participantUids', 'callType', 'status', 'e2eeSafetyCode', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['chatId', 'chatTitle', 'callerId', 'callerName', 'participantUids', 'callType', 'status', 'e2eeSafetyCode', 'createdAt', 'updatedAt']) &&
+                       isValidCall(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(callId) &&
+                       request.auth.uid in existing().participantUids &&
+                       existing().status in ['RINGING', 'CONNECTED'] &&
+                       isValidCall(incoming()) &&
+                       incoming().callerId == existing().callerId &&
+                       incoming().chatId == existing().chatId &&
+                       incoming().callType == existing().callType &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']);
+
+      allow delete: if isSignedIn() && isValidId(callId) && existing().callerId == request.auth.uid;
+    }
+  }
+}
